@@ -1,0 +1,65 @@
+/* [project]/src/components/background-animation/styles.css [app-client] (css) */
+.background-animation {
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(#050215fc, #160530f2);
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.background-animation:before {
+  content: "";
+  background: radial-gradient(circle, #ec48990a, #a855f708, #05021505) 0 0 / 100% 100%;
+  width: 200%;
+  height: 200%;
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  transform: rotate(30deg);
+}
+
+.background-animation:after {
+  content: "";
+  background: radial-gradient(circle at 20% 30%, #ec489926, #0000 30%), radial-gradient(circle at 80% 70%, #a855f71f, #0000 25%);
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: .5;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: .8;
+    transform: scale(1.1);
+  }
+
+  100% {
+    opacity: .5;
+    transform: scale(1);
+  }
+}
+
+.heart-particle {
+  animation: 4s ease-in-out infinite pulse;
+}
+
+#tsparticles canvas {
+  mix-blend-mode: screen;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  position: fixed !important;
+}
+
+/*# sourceMappingURL=src_components_background-animation_styles_css_f9ee138c._.single.css.map*/

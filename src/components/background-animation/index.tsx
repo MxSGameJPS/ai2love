@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Particles from "react-tsparticles";
 import type { Container, Engine } from "tsparticles-engine";
 import { loadSlim } from "tsparticles-slim";
+import { loadHeartShape } from "tsparticles-shape-heart";
 import "./styles.css";
 
 export default function BackgroundAnimation() {
@@ -30,6 +31,7 @@ export default function BackgroundAnimation() {
 
   const particlesInit = useCallback(async (engine: Engine) => {
     await loadSlim(engine);
+    await loadHeartShape(engine);
   }, []);
 
   const particlesLoaded = useCallback(
@@ -58,7 +60,7 @@ export default function BackgroundAnimation() {
           fpsLimit: 60,
           particles: {
             color: {
-              value: ["#ec4899", "#a855f7", "#f472b6", "#d946ef"],
+              value: ["#ec4899", "#f472b6", "#d946ef", "#a855f7"],
             },
             links: {
               color: {
@@ -111,14 +113,14 @@ export default function BackgroundAnimation() {
               },
             },
             shape: {
-              type: ["circle", "triangle"],
+              type: "heart",
             },
             size: {
-              value: { min: 1.5, max: 5 },
+              value: { min: 6, max: 12 },
               animation: {
                 enable: true,
                 speed: 2,
-                minimumValue: 1,
+                minimumValue: 4,
                 sync: false,
               },
             },
