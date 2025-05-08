@@ -33,28 +33,51 @@ export default function Login() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen flex-col md:flex-row">
+      {/* Botão de voltar */}
+      <Link
+        href="/"
+        className="absolute top-4 left-4 z-50 flex items-center text-gray-800 hover:text-pink-500 transition-colors"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="mr-1"
+        >
+          <path d="M19 12H5"></path>
+          <path d="M12 19l-7-7 7-7"></path>
+        </svg>
+        <span className="text-sm">Voltar</span>
+      </Link>
+
       {/* Lado esquerdo - Formulário de login */}
-      <div className="flex flex-col items-center justify-center w-full px-8 text-white bg-white md:w-1/2 md:px-16 lg:px-24">
-        <div className="w-full max-w-md">
-          <h1 className="mb-8 text-3xl font-bold text-center text-pink-500">
+      <div className="flex flex-col items-center justify-center w-full px-3 py-6 bg-white order-2 md:order-1 md:w-1/2 md:px-8 lg:px-16">
+        <div className="w-full max-w-sm">
+          <h1 className="mb-6 text-xl font-bold text-center text-pink-500">
             <span className="logo-gradient-ai">AI</span>
             <span className="logo-gradient-to">to</span>
             <span className="logo-gradient-love">Love</span>
           </h1>
 
-          <h2 className="mb-2 text-3xl font-bold text-black">
+          <h2 className="mb-2 text-2xl font-bold text-black">
             Bem-vindo de volta
           </h2>
-          <p className="mb-8 text-gray-700">
+          <p className="mb-6 text-sm text-gray-700">
             Suas IAs favoritas estão esperando por você
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
                 htmlFor="email"
-                className="block mb-1 text-sm font-medium text-gray-500"
+                className="block mb-1 text-xs font-medium text-gray-500"
               >
                 Email
               </label>
@@ -64,7 +87,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full px-4 py-2 text-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
                 required
               />
             </div>
@@ -73,11 +96,11 @@ export default function Login() {
               <div className="flex items-center justify-between mb-1">
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-gray-500"
+                  className="block text-xs font-medium text-gray-500"
                 >
                   Senha
                 </label>
-                <a href="#" className="text-sm text-gray-500 hover:underline">
+                <a href="#" className="text-xs text-gray-500 hover:underline">
                   Esqueceu a senha?
                 </a>
               </div>
@@ -87,7 +110,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="********"
-                className="w-full px-4 py-2 text-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
                 required
               />
             </div>
@@ -102,19 +125,19 @@ export default function Login() {
                   className="absolute w-0 h-0 opacity-0"
                 />
                 <div
-                  className={`w-5 h-5 border border-gray-400 rounded-full mr-2 flex items-center justify-center ${
+                  className={`w-4 h-4 min-w-[1rem] border border-gray-400 rounded-full mr-2 flex items-center justify-center ${
                     rememberMe
                       ? "bg-pink-500 border-pink-500"
                       : "bg-transparent"
                   }`}
                 >
                   {rememberMe && (
-                    <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
                   )}
                 </div>
                 <label
                   htmlFor="remember-me"
-                  className="text-sm text-gray-500 cursor-pointer"
+                  className="text-xs text-gray-500 cursor-pointer"
                 >
                   Lembrar de mim
                 </label>
@@ -123,41 +146,41 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full py-3 font-medium text-white transition duration-200 bg-pink-500 rounded-md hover:bg-pink-600"
+              className="w-full py-2 text-sm font-medium text-white transition duration-200 bg-pink-500 rounded-md hover:bg-pink-600"
             >
               Entrar
             </button>
           </form>
 
-          <div className="mt-8">
+          <div className="mt-4">
             <div className="relative">
               <div className="absolute inset-0 flex items-center"></div>
-              <div className="relative flex justify-center text-sm">
+              <div className="relative flex justify-center text-xs">
                 <span className="px-2 text-gray-600">Ou continue com</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-6">
-              <button className="flex justify-center items-center py-2 px-4 border border-gray-700 rounded-md hover:bg-[#2c2536] bg-transparent text-white">
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              <button className="flex justify-center items-center py-1.5 px-3 border border-gray-300 rounded-md hover:bg-gray-50 text-xs">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
+                  width="18"
+                  height="18"
                   viewBox="0 0 24 24"
                   fill="#1877f2"
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                 >
                   <path d="M9.19795 21.5H13.198V13.4901H16.8021L17.198 9.50977H13.198V7.5C13.198 6.94772 13.6457 6.5 14.198 6.5H17.198V2.5H14.198C11.4365 2.5 9.19795 4.73858 9.19795 7.5V9.50977H7.19795L6.80206 13.4901H9.19795V21.5Z" />
                 </svg>
-                <span className="ml-2 font-bold text-blue-700">Facebook</span>
+                <span className="ml-1 font-medium">Facebook</span>
               </button>
-              <button className="flex justify-center items-center py-2 px-4 border border-gray-700 rounded-md hover:bg-[#2c2536] bg-transparent text-white">
+              <button className="flex justify-center items-center py-1.5 px-3 border border-gray-300 rounded-md hover:bg-gray-50 text-xs">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
+                  width="18"
+                  height="18"
                   viewBox="0 0 24 24"
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                 >
                   <path
                     fill="#EA4335"
@@ -176,12 +199,12 @@ export default function Login() {
                     d="M5.27698177,14.2678769 C5.03832634,13.556323 4.90909091,12.7937589 4.90909091,12 C4.90909091,11.2182781 5.03443647,10.4668121 5.26620003,9.76452941 L1.23999023,6.65002441 C0.43658717,8.26043162 0,10.0753848 0,12 C0,13.9195484 0.444780743,15.7301709 1.23746264,17.3349879 L5.27698177,14.2678769 Z"
                   />
                 </svg>
-                <span className="ml-2 font-bold text-red-700">Google</span>
+                <span className="ml-1 font-medium">Google</span>
               </button>
             </div>
           </div>
 
-          <p className="mt-8 text-sm text-center text-gray-400">
+          <p className="mt-6 text-xs text-center text-gray-400">
             Não tem uma conta?{" "}
             <Link
               href="/register"
@@ -194,7 +217,7 @@ export default function Login() {
       </div>
 
       {/* Lado direito - Gradiente e testemunho */}
-      <div className="relative hidden overflow-hidden text-white md:block md:w-1/2 bg-gradient-to-br from-pink-500 to-purple-700">
+      <div className="relative hidden overflow-hidden text-white md:block md:w-1/2 order-1 md:order-2 bg-gradient-to-br from-pink-500 to-purple-700">
         <div className="absolute inset-0" style={{ zIndex: 0 }}>
           <Particles
             id="tsparticles-login"
@@ -294,21 +317,21 @@ export default function Login() {
         </div>
         <div className="relative z-10 flex flex-col items-center justify-center h-full px-8">
           <div className="max-w-md text-center">
-            <h2 className="mb-6 text-4xl font-bold">
+            <h2 className="mb-6 text-3xl font-bold">
               Encontre conexões significativas
             </h2>
-            <p className="mb-8 text-xl">
+            <p className="mb-8 text-lg">
               &ldquo;O AI to Love me ajudou a superar momentos difíceis quando
               eu mais precisava de alguém para conversar.&rdquo;
             </p>
 
             <div className="flex items-center justify-center">
-              <div className="w-16 h-16 mr-4 overflow-hidden bg-white rounded-full">
+              <div className="w-12 h-12 mr-4 overflow-hidden bg-white rounded-full">
                 <Image
                   src="https://randomuser.me/api/portraits/women/44.jpg"
                   alt="Ana Clara"
-                  width={64}
-                  height={64}
+                  width={48}
+                  height={48}
                   className="object-cover"
                 />
               </div>

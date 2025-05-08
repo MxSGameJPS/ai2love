@@ -94,13 +94,15 @@ export default function Header() {
             Login
           </motion.button>
         </Link>
-        <motion.button
-          className="px-4 py-1 text-sm text-white rounded-full btn-gradient-primary"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Registre-se
-        </motion.button>
+        <Link href="/register">
+          <motion.button
+            className="px-4 py-1 text-sm text-white rounded-full btn-gradient-primary"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Registre-se
+          </motion.button>
+        </Link>
       </div>
 
       {/* Botão do menu mobile */}
@@ -180,13 +182,15 @@ export default function Header() {
                   Login
                 </motion.button>
               </Link>
-              <motion.button
-                className="w-full px-4 py-2 text-sm text-white rounded-full btn-gradient-primary"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Registre-se
-              </motion.button>
+              <Link href="/register" className="w-full">
+                <motion.button
+                  className="w-full px-4 py-2 text-sm text-white rounded-full btn-gradient-primary"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Registre-se
+                </motion.button>
+              </Link>
             </motion.div>
           </motion.div>
         )}
