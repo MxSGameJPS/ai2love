@@ -100,9 +100,12 @@ export default function Login() {
                 >
                   Senha
                 </label>
-                <a href="#" className="text-xs text-gray-500 hover:underline">
+                <Link
+                  href="/recuperar-senha"
+                  className="text-xs text-gray-500 hover:underline"
+                >
                   Esqueceu a senha?
-                </a>
+                </Link>
               </div>
               <input
                 id="password"
