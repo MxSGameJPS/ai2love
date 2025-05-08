@@ -1,0 +1,79 @@
+.background-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(5, 2, 21, 0.99),
+    rgba(22, 5, 48, 0.95)
+  );
+  overflow: hidden;
+}
+
+.background-animation::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(236, 72, 153, 0.04),
+    rgba(168, 85, 247, 0.03),
+    rgba(5, 2, 21, 0.02)
+  );
+  background-size: 100% 100%;
+  transform: rotate(30deg);
+}
+
+.background-animation::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+      circle at 20% 30%,
+      rgba(236, 72, 153, 0.15),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 80% 70%,
+      rgba(168, 85, 247, 0.12),
+      transparent 25%
+    );
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+}
+
+.heart-particle {
+  animation: pulse 4s infinite ease-in-out;
+}
+
+#tsparticles canvas {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+}

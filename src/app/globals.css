@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: transparent;
+  --foreground: #171717;
+}
+
+body {
+  color: var(--foreground);
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+/* Reset margins */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Gradiente do logo */
+.logo-gradient-ai {
+  background: linear-gradient(90deg, #ec4899 0%, #f472b6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.logo-gradient-love {
+  background: linear-gradient(90deg, #a855f7 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.logo-gradient-to {
+  background: linear-gradient(45deg, #ec4899 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Botões com gradiente */
+.btn-gradient-primary {
+  background: linear-gradient(90deg, #ec4899 0%, #a855f7 100%);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-gradient-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+.btn-gradient-secondary {
+  background: white;
+  position: relative;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.btn-gradient-secondary:hover {
+  background: linear-gradient(90deg, #fce7f3 0%, #f5d0fe 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.1);
+}
+
+/* Efeito de zoom na imagem */
+.image-zoom {
+  overflow: hidden;
+}
+
+.image-zoom img {
+  transition: transform 0.5s ease;
+}
+
+.image-zoom:hover img {
+  transform: scale(1.05);
+}
+
+/* Garantir que os elementos de conteúdo tenham um z-index positivo */
+.section-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ajuste para seções com fundos escuros */
+.section-dark {
+  background-color: rgba(5, 2, 21, 0.7);
+  position: relative;
+  z-index: 1;
+}
