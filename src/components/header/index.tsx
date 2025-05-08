@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -50,7 +51,7 @@ export default function Header() {
     >
       {/* Logo com gradiente */}
       <motion.div
-        className="text-xl font-semibold flex items-center gap-1"
+        className="flex items-center gap-1 text-xl font-semibold"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
@@ -61,38 +62,40 @@ export default function Header() {
       </motion.div>
 
       {/* Menu para desktop */}
-      <nav className="hidden md:flex items-center gap-5 text-sm ml-auto mr-8">
-        <a
-          href="#"
-          className="text-gray-700 hover:text-pink-500 transition-colors"
+      <nav className="items-center hidden gap-5 ml-auto mr-8 text-sm md:flex">
+        <Link
+          href="/"
+          className="text-gray-700 transition-colors hover:text-pink-500"
         >
           Início
-        </a>
+        </Link>
         <a
           href="#"
-          className="text-gray-700 hover:text-pink-500 transition-colors"
+          className="text-gray-700 transition-colors hover:text-pink-500"
         >
           Planos
         </a>
         <a
           href="#"
-          className="text-gray-700 hover:text-pink-500 transition-colors"
+          className="text-gray-700 transition-colors hover:text-pink-500"
         >
           Sobre
         </a>
       </nav>
 
       {/* Botões para desktop */}
-      <div className="hidden md:flex items-center space-x-2">
+      <div className="items-center hidden space-x-2 md:flex">
+        <Link href="/login">
+          <motion.button
+            className="px-4 py-1 text-sm text-pink-500 border border-pink-500 rounded-full btn-gradient-secondary"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Login
+          </motion.button>
+        </Link>
         <motion.button
-          className="px-4 py-1 rounded-full border border-pink-500 text-pink-500 text-sm btn-gradient-secondary"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Login
-        </motion.button>
-        <motion.button
-          className="px-4 py-1 rounded-full text-white text-sm btn-gradient-primary"
+          className="px-4 py-1 text-sm text-white rounded-full btn-gradient-primary"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -114,7 +117,7 @@ export default function Header() {
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
+          className="w-6 h-6"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -141,7 +144,7 @@ export default function Header() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            className="absolute top-14 left-0 right-0 bg-white shadow-lg rounded-b-lg p-5 md:hidden flex flex-col space-y-4 z-50"
+            className="absolute left-0 right-0 z-50 flex flex-col p-5 space-y-4 bg-white rounded-b-lg shadow-lg top-14 md:hidden"
             initial={{ opacity: 0, height: 0, y: -10 }}
             animate={{ opacity: 1, height: "auto", y: 0 }}
             exit={{ opacity: 0, height: 0, y: -10 }}
@@ -163,20 +166,22 @@ export default function Header() {
               ))}
             </nav>
             <motion.div
-              className="flex flex-col space-y-2 pt-3 mt-1 border-t border-gray-100"
+              className="flex flex-col pt-3 mt-1 space-y-2 border-t border-gray-100"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.3 }}
             >
+              <Link href="/login" className="w-full">
+                <motion.button
+                  className="w-full px-4 py-2 text-sm text-pink-500 border border-pink-500 rounded-full btn-gradient-secondary"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Login
+                </motion.button>
+              </Link>
               <motion.button
-                className="w-full px-4 py-2 rounded-full border border-pink-500 text-pink-500 text-sm btn-gradient-secondary"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Login
-              </motion.button>
-              <motion.button
-                className="w-full px-4 py-2 rounded-full text-white text-sm btn-gradient-primary"
+                className="w-full px-4 py-2 text-sm text-white rounded-full btn-gradient-primary"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >

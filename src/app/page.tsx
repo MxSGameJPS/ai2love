@@ -1,3 +1,5 @@
+"use client";
+
 import Hero from "@/components/hero";
 import Benefits from "@/components/benefits";
 import Plans from "@/components/plans";
