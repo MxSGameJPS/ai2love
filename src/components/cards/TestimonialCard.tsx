@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface TestimonialCardProps {
   name: string;
@@ -96,13 +97,19 @@ export default function TestimonialCard({
       viewport={{ once: true, margin: "-50px" }}
     >
       <div className="flex items-center mb-4">
-        <motion.img
-          src={avatarUrl}
-          alt={`Avatar de ${name}`}
-          className="w-12 h-12 rounded-full object-cover mr-4"
+        <motion.div
+          className="w-12 h-12 rounded-full overflow-hidden mr-4 relative"
           variants={imageVariants}
           whileHover="hover"
-        />
+        >
+          <Image
+            src={avatarUrl}
+            alt={`Avatar de ${name}`}
+            width={48}
+            height={48}
+            className="w-full h-full object-cover"
+          />
+        </motion.div>
         <motion.div variants={contentVariants}>
           <motion.h4
             className="font-medium text-gray-900"
@@ -119,7 +126,7 @@ export default function TestimonialCard({
         </motion.div>
       </div>
       <motion.p className="text-gray-700 text-sm" variants={quoteVariants}>
-        "{testimonial}"
+        &ldquo;{testimonial}&rdquo;
       </motion.p>
     </motion.div>
   );

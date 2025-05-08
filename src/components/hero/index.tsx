@@ -1,3 +1,7 @@
+"use client";
+
+import Image from "next/image";
+
 export default function Hero() {
   return (
     <section className="w-full bg-gradient-to-b from-pink-100 to-purple-50 py-16 mt-0">
@@ -32,18 +36,22 @@ export default function Hero() {
         {/* Coluna da imagem */}
         <div className="md:w-1/2 relative">
           <div className="rounded-lg overflow-hidden shadow-xl image-zoom">
-            <img
+            <Image
               src="https://images.unsplash.com/photo-1581092921461-eab62e97a780?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
               alt="Equipe trabalhando com tecnologia"
+              width={1170}
+              height={780}
               className="w-full"
             />
 
             {/* Chat overlay */}
             <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white p-4 rounded-lg flex items-center gap-4 max-w-md z-10">
               <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                <img
+                <Image
                   src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&h=200&q=80"
                   alt="Ana avatar"
+                  width={200}
+                  height={200}
                   className="w-full h-full object-cover"
                   style={{ aspectRatio: "1/1" }}
                 />

@@ -1,14 +1,14 @@
-import type { IShapeDrawer, IShapeValues } from "tsparticles-engine";
+import type { IShapeDrawer, Particle } from "tsparticles-engine";
 
 export class HeartShape implements IShapeDrawer {
   draw(
     context: CanvasRenderingContext2D,
-    particle: IShapeValues,
+    particle: Particle,
     radius: number
   ): void {
     const factor = 0.5;
-    const x = particle.x || 0;
-    const y = particle.y || 0;
+    const x = particle.position?.x || 0;
+    const y = particle.position?.y || 0;
 
     context.moveTo(x, y - radius / 3);
 
