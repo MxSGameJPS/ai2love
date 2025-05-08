@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function RecuperarSenha() {
   const [email, setEmail] = useState("");
@@ -133,4 +132,4 @@ export default function RecuperarSenha() {
       </div>
     </div>
   );
-} 
+}
