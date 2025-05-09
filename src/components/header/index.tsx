@@ -69,12 +69,12 @@ export default function Header() {
         >
           Início
         </Link>
-        <a
-          href="#"
+        <Link
+          href="/planos"
           className="text-gray-700 transition-colors hover:text-pink-500"
         >
           Planos
-        </a>
+        </Link>
         <a
           href="#"
           className="text-gray-700 transition-colors hover:text-pink-500"
@@ -156,7 +156,13 @@ export default function Header() {
               {["Início", "Planos", "Sobre"].map((item, index) => (
                 <motion.a
                   key={item}
-                  href="#"
+                  href={
+                    item === "Início"
+                      ? "/"
+                      : item === "Planos"
+                      ? "/planos"
+                      : "#"
+                  }
                   className="text-gray-700 hover:text-pink-500 py-1.5 px-2 rounded-md hover:bg-pink-50 transition-colors"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
