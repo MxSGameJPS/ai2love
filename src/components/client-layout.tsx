@@ -16,7 +16,9 @@ export default function ClientLayout({
     pathname === "/login" ||
     pathname === "/register" ||
     pathname === "/recuperar-senha" ||
-    pathname.startsWith("/verificar-email");
+    pathname.startsWith("/verificar-email") ||
+    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/");
 
   return (
     <AuthProvider>

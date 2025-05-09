@@ -55,7 +55,7 @@ export default function DashboardLayout({
     },
     {
       id: "profile",
-      label: "Meu Perfil",
+      label: "Perfil",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -75,7 +75,7 @@ export default function DashboardLayout({
     },
     {
       id: "partners",
-      label: "Parceiros IA",
+      label: "Parceiros",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -116,7 +116,7 @@ export default function DashboardLayout({
     },
     {
       id: "settings",
-      label: "Configurações",
+      label: "Config",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -231,7 +231,7 @@ export default function DashboardLayout({
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu - Top bar */}
       <div className="md:hidden fixed top-0 left-0 w-full z-40 bg-white border-b border-gray-200 px-4 py-2">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-pink-500">
@@ -239,80 +239,20 @@ export default function DashboardLayout({
             <span className="logo-gradient-to">to</span>
             <span className="logo-gradient-love">Love</span>
           </h1>
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="rounded-md p-2 text-gray-400 hover:bg-gray-100"
-          >
-            {isMobileMenuOpen ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile menu dropdown */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden fixed top-12 left-0 right-0 z-30 bg-white border-b border-gray-200 shadow-lg p-4">
-          <nav className="grid gap-2">
-            {navigationItems.map((item) => (
-              <Link
-                key={item.id}
-                href={item.href}
-                className={`
-                  flex items-center px-3 py-2 text-base font-medium rounded-md
-                  ${
-                    activePage === item.id
-                      ? "bg-purple-50 text-purple-600"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }
-                `}
-                onClick={() => {
-                  setActivePage(item.id);
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <span className="mr-3 flex-shrink-0">{item.icon}</span>
-                {item.label}
-              </Link>
-            ))}
+          <div className="flex items-center">
+            <div className="flex-shrink-0 mr-3">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                {user?.name?.charAt(0) || "U"}
+              </div>
+            </div>
             <button
-              onClick={() => {
-                logout();
-                setIsMobileMenuOpen(false);
-              }}
-              className="flex w-full items-center px-3 py-2 text-base font-medium text-red-500 rounded-md hover:bg-red-50"
+              onClick={logout}
+              className="ml-2 rounded-md p-2 text-red-500 hover:bg-red-50"
+              aria-label="Sair"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="mr-3 h-5 w-5"
+                className="h-5 w-5"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -324,36 +264,42 @@ export default function DashboardLayout({
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              Sair
             </button>
-          </nav>
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                  {user?.name?.charAt(0) || "U"}
-                </div>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">
-                  {user?.name || "Usuário"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {user?.plan ? `Plano ${user.plan}` : "Plano básico"}
-                </p>
-              </div>
-            </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Main content */}
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 overflow-y-auto pt-16 md:pt-0 pb-4">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
-            {children}
-          </div>
+      {/* Conteúdo Principal */}
+      <div className="flex flex-col flex-1 w-0 overflow-hidden">
+        <main className="relative flex-1 overflow-y-auto focus:outline-none pb-16 md:pb-0">
+          <div className="pt-14 md:pt-0">{children}</div>
         </main>
+      </div>
+
+      {/* Menu Móvel - Barra de Navegação Inferior */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg">
+        <nav className="flex justify-between items-center px-2">
+          {navigationItems.map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={`
+                flex flex-col items-center justify-center py-2 px-1 
+                ${
+                  activePage === item.id
+                    ? "text-purple-600"
+                    : "text-gray-500 hover:text-purple-600"
+                }
+              `}
+              onClick={() => setActivePage(item.id)}
+            >
+              <span className="inline-flex items-center justify-center">
+                {item.icon}
+              </span>
+              <span className="text-xs mt-1">{item.label}</span>
+            </Link>
+          ))}
+        </nav>
       </div>
     </div>
   );
