@@ -2,17 +2,62 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function RecuperarSenha() {
   const [email, setEmail] = useState("");
   const [mensagemEnviada, setMensagemEnviada] = useState(false);
+  const [errors, setErrors] = useState<{
+    email?: string;
+    general?: string;
+  }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { requestPasswordReset } = useAuth();
+
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+
+    // Validar email
+    if (!email) {
+      newErrors.email = "Email é obrigatório";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Email inválido";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica para enviar o email de recuperação
-    console.log({ email });
-    // Simulando envio de email
-    setMensagemEnviada(true);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const success = await requestPasswordReset(email);
+
+      if (success) {
+        setMensagemEnviada(true);
+      } else {
+        setErrors({
+          general:
+            "Não foi possível enviar o email de recuperação. Tente novamente.",
+        });
+      }
+    } catch (error) {
+      console.error("Erro na recuperação de senha:", error);
+      setErrors({
+        general:
+          "Ocorreu um erro durante o processamento. Tente novamente mais tarde.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -92,6 +137,12 @@ export default function RecuperarSenha() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {errors.general && (
+                <div className="p-2 bg-red-50 border border-red-200 text-red-600 text-xs rounded">
+                  {errors.general}
+                </div>
+              )}
+
               <div>
                 <label
                   htmlFor="email"
@@ -105,16 +156,22 @@ export default function RecuperarSenha() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className={`w-full px-3 py-2 text-sm border ${
+                    errors.email ? "border-red-500" : "border-gray-300"
+                  } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500`}
                   required
                 />
+                {errors.email && (
+                  <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+                )}
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2 text-sm font-medium text-white transition duration-200 bg-purple-600 rounded-md hover:bg-purple-700"
+                className="w-full py-2 text-sm font-medium text-white transition duration-200 bg-purple-600 rounded-md hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
               >
-                Recuperar senha
+                {isSubmitting ? "Processando..." : "Recuperar senha"}
               </button>
 
               <p className="mt-6 text-xs text-center text-gray-600">

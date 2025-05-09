@@ -7,6 +7,8 @@ import Particles from "react-tsparticles";
 import type { Container, Engine } from "tsparticles-engine";
 import { loadSlim } from "tsparticles-slim";
 import { loadHeartShape } from "tsparticles-shape-heart";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -15,6 +17,18 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [particleCount] = useState(70);
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+    agreeTerms?: string;
+    general?: string;
+  }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { register } = useAuth();
+  const router = useRouter();
 
   const particlesInit = useCallback(async (engine: Engine) => {
     await loadSlim(engine);
@@ -28,10 +42,80 @@ export default function Register() {
     []
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+
+    // Validar nome
+    if (!name.trim()) {
+      newErrors.name = "Nome é obrigatório";
+    } else if (name.trim().length < 3) {
+      newErrors.name = "Nome deve ter pelo menos 3 caracteres";
+    }
+
+    // Validar email
+    if (!email) {
+      newErrors.email = "Email é obrigatório";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Email inválido";
+    }
+
+    // Validar senha
+    if (!password) {
+      newErrors.password = "Senha é obrigatória";
+    } else if (password.length < 6) {
+      newErrors.password = "Senha deve ter pelo menos 6 caracteres";
+    }
+
+    // Validar confirmação de senha
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Confirmação de senha é obrigatória";
+    } else if (confirmPassword !== password) {
+      newErrors.confirmPassword = "As senhas não coincidem";
+    }
+
+    // Validar termos
+    if (!agreeTerms) {
+      newErrors.agreeTerms = "Você deve concordar com os termos";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica de registro aqui
-    console.log({ name, email, password, confirmPassword, agreeTerms });
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Armazenar temporariamente os dados do usuário para uso na seleção de plano
+      localStorage.setItem("tempUserName", name);
+      localStorage.setItem("tempUserEmail", email);
+      localStorage.setItem("tempUserPassword", password); // Em produção, é melhor não armazenar senhas assim
+
+      const result = await register(name, email, password);
+
+      if (result.success && result.userId) {
+        // Redirecionar para a página de seleção de planos
+        router.push(`/register/plan?userId=${result.userId}`);
+      } else {
+        setErrors({
+          general: "Não foi possível criar sua conta. Tente novamente.",
+        });
+      }
+    } catch (error) {
+      console.error("Erro no registro:", error);
+      setErrors({
+        general:
+          "Ocorreu um erro durante o registro. Tente novamente mais tarde.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -218,6 +302,12 @@ export default function Register() {
             Estamos animados para te conhecer
           </p>
 
+          {errors.general && (
+            <div className="mb-4 p-2 bg-red-50 border border-red-200 text-red-600 text-xs rounded">
+              {errors.general}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
@@ -232,9 +322,14 @@ export default function Register() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Seu nome"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className={`w-full px-3 py-2 text-sm border ${
+                  errors.name ? "border-red-500" : "border-gray-300"
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500`}
                 required
               />
+              {errors.name && (
+                <p className="mt-1 text-xs text-red-500">{errors.name}</p>
+              )}
             </div>
 
             <div>
@@ -250,9 +345,14 @@ export default function Register() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className={`w-full px-3 py-2 text-sm border ${
+                  errors.email ? "border-red-500" : "border-gray-300"
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500`}
                 required
               />
+              {errors.email && (
+                <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+              )}
             </div>
 
             <div>
@@ -268,9 +368,14 @@ export default function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="********"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className={`w-full px-3 py-2 text-sm border ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500`}
                 required
               />
+              {errors.password && (
+                <p className="mt-1 text-xs text-red-500">{errors.password}</p>
+              )}
             </div>
 
             <div>
@@ -286,9 +391,16 @@ export default function Register() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="********"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className={`w-full px-3 py-2 text-sm border ${
+                  errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500`}
                 required
               />
+              {errors.confirmPassword && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.confirmPassword}
+                </p>
+              )}
             </div>
 
             <div className="flex items-start">
@@ -303,7 +415,9 @@ export default function Register() {
                     required
                   />
                   <div
-                    className={`w-4 h-4 min-w-[1rem] border border-gray-400 rounded-full mr-2 flex items-center justify-center ${
+                    className={`w-4 h-4 min-w-[1rem] border ${
+                      errors.agreeTerms ? "border-red-500" : "border-gray-400"
+                    } rounded-full mr-2 flex items-center justify-center ${
                       agreeTerms
                         ? "bg-purple-500 border-purple-500"
                         : "bg-transparent"
@@ -332,12 +446,16 @@ export default function Register() {
                 </Link>
               </label>
             </div>
+            {errors.agreeTerms && (
+              <p className="text-xs text-red-500 -mt-2">{errors.agreeTerms}</p>
+            )}
 
             <button
               type="submit"
-              className="w-full py-2 text-sm font-medium text-white transition duration-200 bg-purple-600 rounded-md hover:bg-purple-700"
+              className="w-full py-2 text-sm font-medium text-white transition duration-200 bg-purple-600 rounded-md hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
             >
-              Criar conta
+              {isSubmitting ? "Processando..." : "Criar conta"}
             </button>
           </form>
 

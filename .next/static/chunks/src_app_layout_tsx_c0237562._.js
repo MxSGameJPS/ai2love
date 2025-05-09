@@ -6,7 +6,7 @@
   "static/chunks/node_modules_motion-dom_dist_es_c7a0b6ce._.js",
   "static/chunks/node_modules_tsparticles-engine_esm_627710d3._.js",
   "static/chunks/node_modules_a5ba09cf._.js",
-  "static/chunks/src_components_d9789e1a._.js"
+  "static/chunks/src_272cd81d._.js"
 ],
     source: "dynamic"
 });

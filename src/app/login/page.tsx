@@ -7,12 +7,23 @@ import Particles from "react-tsparticles";
 import type { Container, Engine } from "tsparticles-engine";
 import { loadSlim } from "tsparticles-slim";
 import { loadHeartShape } from "tsparticles-shape-heart";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [particleCount] = useState(70);
+  const [errors, setErrors] = useState<{
+    email?: string;
+    password?: string;
+    general?: string;
+  }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { login } = useAuth();
+  const router = useRouter();
 
   const particlesInit = useCallback(async (engine: Engine) => {
     await loadSlim(engine);
@@ -26,10 +37,53 @@ export default function Login() {
     []
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+
+    // Validar email
+    if (!email) {
+      newErrors.email = "Email é obrigatório";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Email inválido";
+    }
+
+    // Validar senha
+    if (!password) {
+      newErrors.password = "Senha é obrigatória";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica de autenticação aqui
-    console.log({ email, password, rememberMe });
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const success = await login(email, password);
+
+      if (success) {
+        // Redirecionar para o dashboard
+        router.push("/dashboard");
+      } else {
+        setErrors({
+          general: "Email ou senha incorretos. Tente novamente.",
+        });
+      }
+    } catch (error) {
+      console.error("Erro no login:", error);
+      setErrors({
+        general: "Ocorreu um erro durante o login. Tente novamente mais tarde.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -73,6 +127,12 @@ export default function Login() {
             Suas IAs favoritas estão esperando por você
           </p>
 
+          {errors.general && (
+            <div className="mb-4 p-2 bg-red-50 border border-red-200 text-red-600 text-xs rounded">
+              {errors.general}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
@@ -87,9 +147,14 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className={`w-full px-3 py-2 text-sm border ${
+                  errors.email ? "border-red-500" : "border-gray-300"
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500`}
                 required
               />
+              {errors.email && (
+                <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+              )}
             </div>
 
             <div>
@@ -113,9 +178,14 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="********"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className={`w-full px-3 py-2 text-sm border ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500`}
                 required
               />
+              {errors.password && (
+                <p className="mt-1 text-xs text-red-500">{errors.password}</p>
+              )}
             </div>
 
             <div className="flex items-center">
@@ -149,9 +219,10 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full py-2 text-sm font-medium text-white transition duration-200 bg-pink-500 rounded-md hover:bg-pink-600"
+              className="w-full py-2 text-sm font-medium text-white transition duration-200 bg-pink-500 rounded-md hover:bg-pink-600 disabled:bg-pink-400 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
             >
-              Entrar
+              {isSubmitting ? "Processando..." : "Entrar"}
             </button>
           </form>
 
