@@ -9,6 +9,12 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [subscriptionMessage, setSubscriptionMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   // Formulário
   const [formData, setFormData] = useState({
@@ -33,6 +39,77 @@ export default function ProfilePage() {
     newPassword?: string;
     confirmPassword?: string;
   }>({});
+
+  // Mapeamento de planos para valores mensais (simulados)
+  const planPrices = {
+    basic: "R$ 19,90",
+    premium: "R$ 49,90",
+    vip: "R$ 99,90",
+  };
+
+  // Função para lidar com upgrade do plano
+  const handlePlanUpgrade = async (newPlan: "basic" | "premium" | "vip") => {
+    // Simular que o atual não pode fazer upgrade para o mesmo plano
+    if (user?.plan === newPlan) {
+      setSubscriptionMessage({
+        type: "error",
+        text: "Você já está inscrito neste plano.",
+      });
+      return;
+    }
+
+    try {
+      setIsSubscriptionLoading(true);
+      setSubscriptionMessage(null);
+
+      // Simular uma chamada para API de checkout
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // URL de checkout simulada
+      const checkoutUrl = `https://checkout.ai2love.com/upgrade?plan=${newPlan}&user=${user?.id}`;
+
+      // Abrir a URL de checkout em uma nova janela/aba
+      window.open(checkoutUrl, "_blank");
+
+      setSubscriptionMessage({
+        type: "success",
+        text: "Redirecionando para o checkout. Complete o pagamento para ativar seu novo plano.",
+      });
+    } catch (error) {
+      console.error("Erro ao processar upgrade:", error);
+      setSubscriptionMessage({
+        type: "error",
+        text: "Ocorreu um erro ao processar seu pedido. Tente novamente.",
+      });
+    } finally {
+      setIsSubscriptionLoading(false);
+    }
+  };
+
+  // Função para cancelar assinatura
+  const handleCancelSubscription = async () => {
+    try {
+      setIsSubscriptionLoading(true);
+      setSubscriptionMessage(null);
+
+      // Simular uma chamada para API de cancelamento
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      setShowCancelConfirm(false);
+      setSubscriptionMessage({
+        type: "success",
+        text: "Sua assinatura foi cancelada com sucesso. Você continuará tendo acesso até o final do período faturado.",
+      });
+    } catch (error) {
+      console.error("Erro ao cancelar assinatura:", error);
+      setSubscriptionMessage({
+        type: "error",
+        text: "Ocorreu um erro ao cancelar sua assinatura. Tente novamente.",
+      });
+    } finally {
+      setIsSubscriptionLoading(false);
+    }
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -171,6 +248,222 @@ export default function ProfilePage() {
         <p className="text-gray-600">
           Gerencie suas informações pessoais e preferências
         </p>
+      </div>
+
+      {/* Seção de gerenciamento de assinatura */}
+      <div className="overflow-hidden bg-white shadow-sm rounded-xl mb-8">
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">
+            Minha Assinatura
+          </h2>
+
+          {subscriptionMessage && (
+            <div
+              className={`p-4 mb-6 rounded-md ${
+                subscriptionMessage.type === "success"
+                  ? "bg-green-50 text-green-800"
+                  : "bg-red-50 text-red-800"
+              }`}
+            >
+              <p>{subscriptionMessage.text}</p>
+            </div>
+          )}
+
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-6 text-white mb-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-bold mb-2 capitalize">
+                  {user?.plan || "Básico"}
+                </h3>
+                <p className="text-purple-100 mb-1">Plano atual</p>
+                <p className="text-xl font-bold">
+                  {
+                    planPrices[
+                      (user?.plan as keyof typeof planPrices) || "basic"
+                    ]
+                  }
+                  /mês
+                </p>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2">
+                <p className="text-sm">Próxima cobrança</p>
+                <p className="font-medium">15 de Outubro, 2023</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">
+              Atualizar plano
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Plano Básico */}
+              <div
+                className={`border rounded-lg p-4 ${
+                  user?.plan === "basic"
+                    ? "border-purple-500 bg-purple-50"
+                    : "border-gray-200 hover:border-purple-300 hover:bg-purple-50/50"
+                } transition-all`}
+              >
+                <h4 className="font-bold text-gray-800 mb-1">Básico</h4>
+                <p className="text-xl font-bold text-purple-600 mb-3">
+                  {planPrices.basic}/mês
+                </p>
+                <ul className="text-sm text-gray-600 mb-4 space-y-1">
+                  <li>• 30 conversas por mês</li>
+                  <li>• 3 parceiros virtuais</li>
+                  <li>• Suporte por email</li>
+                </ul>
+
+                <button
+                  onClick={() => handlePlanUpgrade("basic")}
+                  disabled={user?.plan === "basic" || isSubscriptionLoading}
+                  className={`w-full py-2 px-3 rounded-md text-sm font-medium ${
+                    user?.plan === "basic"
+                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                      : "bg-purple-600 text-white hover:bg-purple-700"
+                  }`}
+                >
+                  {user?.plan === "basic" ? "Plano Atual" : "Selecionar"}
+                </button>
+              </div>
+
+              {/* Plano Premium */}
+              <div
+                className={`border rounded-lg p-4 ${
+                  user?.plan === "premium"
+                    ? "border-purple-500 bg-purple-50"
+                    : "border-gray-200 hover:border-purple-300 hover:bg-purple-50/50"
+                } transition-all`}
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <h4 className="font-bold text-gray-800">Premium</h4>
+                  <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                    Popular
+                  </span>
+                </div>
+                <p className="text-xl font-bold text-purple-600 mb-3">
+                  {planPrices.premium}/mês
+                </p>
+                <ul className="text-sm text-gray-600 mb-4 space-y-1">
+                  <li>• Conversas ilimitadas</li>
+                  <li>• 8 parceiros virtuais</li>
+                  <li>• Personalização avançada</li>
+                  <li>• Suporte prioritário</li>
+                </ul>
+
+                <button
+                  onClick={() => handlePlanUpgrade("premium")}
+                  disabled={user?.plan === "premium" || isSubscriptionLoading}
+                  className={`w-full py-2 px-3 rounded-md text-sm font-medium ${
+                    user?.plan === "premium"
+                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                      : "bg-purple-600 text-white hover:bg-purple-700"
+                  }`}
+                >
+                  {user?.plan === "premium" ? "Plano Atual" : "Selecionar"}
+                </button>
+              </div>
+
+              {/* Plano VIP */}
+              <div
+                className={`border rounded-lg p-4 ${
+                  user?.plan === "vip"
+                    ? "border-purple-500 bg-purple-50"
+                    : "border-gray-200 hover:border-purple-300 hover:bg-purple-50/50"
+                } transition-all`}
+              >
+                <h4 className="font-bold text-gray-800 mb-1">VIP</h4>
+                <p className="text-xl font-bold text-purple-600 mb-3">
+                  {planPrices.vip}/mês
+                </p>
+                <ul className="text-sm text-gray-600 mb-4 space-y-1">
+                  <li>• Conversas ilimitadas</li>
+                  <li>• Acesso a todos os parceiros</li>
+                  <li>• Personalização completa</li>
+                  <li>• Suporte VIP 24/7</li>
+                  <li>• Recursos exclusivos</li>
+                </ul>
+
+                <button
+                  onClick={() => handlePlanUpgrade("vip")}
+                  disabled={user?.plan === "vip" || isSubscriptionLoading}
+                  className={`w-full py-2 px-3 rounded-md text-sm font-medium ${
+                    user?.plan === "vip"
+                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                      : "bg-purple-600 text-white hover:bg-purple-700"
+                  }`}
+                >
+                  {user?.plan === "vip" ? "Plano Atual" : "Selecionar"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">
+              Cancelar assinatura
+            </h3>
+            {!showCancelConfirm ? (
+              <button
+                onClick={() => setShowCancelConfirm(true)}
+                className="px-4 py-2 border border-red-300 text-red-600 rounded-md text-sm font-medium hover:bg-red-50"
+              >
+                Cancelar minha assinatura
+              </button>
+            ) : (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-gray-700 mb-3">
+                  Tem certeza que deseja cancelar sua assinatura? Você perderá
+                  acesso aos recursos premium ao final do período faturado.
+                </p>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleCancelSubscription}
+                    disabled={isSubscriptionLoading}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-70"
+                  >
+                    {isSubscriptionLoading ? (
+                      <span className="flex items-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Processando...
+                      </span>
+                    ) : (
+                      "Sim, cancelar assinatura"
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowCancelConfirm(false)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50"
+                    disabled={isSubscriptionLoading}
+                  >
+                    Não, manter assinatura
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="overflow-hidden bg-white shadow-sm rounded-xl">

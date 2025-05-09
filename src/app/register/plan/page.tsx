@@ -98,16 +98,13 @@ function PlanSelectContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
+  const preselectedPlan = searchParams.get("preselected");
   const { selectPlan } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
 
-  useEffect(() => {
-    if (!userId) {
-      router.push("/register");
-    }
-  }, [userId, router]);
-
+  // Função para lidar com a seleção de plano
   const handleSelectPlan = async (plan: PlanType) => {
     if (!userId) return;
 
@@ -118,8 +115,22 @@ function PlanSelectContent() {
       const success = await selectPlan(userId, plan);
 
       if (success) {
-        // Após selecionar o plano com sucesso, redirecionar para a verificação de email
-        router.push("/verificar-email?status=pendente");
+        if (plan === "basic") {
+          // Para o plano básico, redirecionar para a página de verificação de email
+          router.push("/verificar-email?status=pendente");
+        } else {
+          // Para planos pagos, redirecionar para checkout externo
+          const checkoutUrl = `https://checkout.ai2love.com/upgrade?plan=${plan}&user=${userId}`;
+
+          // Mostrar mensagem de sucesso antes de redirecionar
+          setError(null);
+
+          // Opção 1: Abrir em uma nova janela/aba
+          window.open(checkoutUrl, "_blank");
+
+          // Redirecionar para página de sucesso após seleção do plano
+          router.push("/verificar-email?status=pendente&checkout=true");
+        }
       } else {
         setError("Não foi possível selecionar o plano. Tente novamente.");
       }
@@ -130,6 +141,24 @@ function PlanSelectContent() {
       setIsLoading(false);
     }
   };
+
+  // Verificar se o usuário está autenticado
+  useEffect(() => {
+    if (!userId) {
+      router.push("/register");
+    }
+  }, [userId, router]);
+
+  // Se houver um plano pré-selecionado, selecionar automaticamente
+  useEffect(() => {
+    if (preselectedPlan && userId && !redirecting) {
+      const validPlan = preselectedPlan as PlanType;
+      if (["basic", "premium", "vip"].includes(validPlan)) {
+        setRedirecting(true);
+        handleSelectPlan(validPlan);
+      }
+    }
+  }, [preselectedPlan, userId, redirecting, handleSelectPlan]);
 
   const plans: PlanProps[] = [
     {

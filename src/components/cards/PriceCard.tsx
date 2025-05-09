@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 interface PriceCardProps {
   title: string;
@@ -23,6 +24,8 @@ export default function PriceCard({
   buttonText,
   buttonColor,
 }: PriceCardProps) {
+  const router = useRouter();
+
   // Variantes de animação para o card
   const cardVariants = {
     hidden: { opacity: 0, y: 50 },
@@ -93,6 +96,35 @@ export default function PriceCard({
       },
     },
     tap: { scale: 0.95 },
+  };
+
+  // Função para lidar com o clique no botão
+  const handleButtonClick = () => {
+    // Identificar qual plano foi selecionado com base no título
+    const planType = title.toLowerCase();
+
+    // Para o plano básico, apenas redirecionar para o cadastro
+    if (planType === "básico" || planType === "basico") {
+      router.push("/register");
+      return;
+    }
+
+    // Para os planos premium e vip, salvar a seleção e redirecionar
+    let normalizedType = "";
+
+    if (planType === "premium") {
+      normalizedType = "premium";
+    } else if (planType === "vip") {
+      normalizedType = "vip";
+    } else {
+      normalizedType = "basic"; // Valor padrão, caso necessário
+    }
+
+    // Salvar o plano selecionado no localStorage para uso após o registro
+    localStorage.setItem("selectedPlan", normalizedType);
+
+    // Redirecionar para a página de cadastro
+    router.push("/register");
   };
 
   return (
@@ -202,6 +234,7 @@ export default function PriceCard({
           variants={buttonVariants}
           whileHover="hover"
           whileTap="tap"
+          onClick={handleButtonClick}
         >
           {buttonText}
         </motion.button>

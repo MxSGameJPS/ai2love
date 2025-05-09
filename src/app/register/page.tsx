@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Particles from "react-tsparticles";
@@ -17,6 +17,7 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [particleCount] = useState(70);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
@@ -29,6 +30,14 @@ export default function Register() {
 
   const { register } = useAuth();
   const router = useRouter();
+
+  // Verificar se existe um plano selecionado no localStorage
+  useEffect(() => {
+    const plan = localStorage.getItem("selectedPlan");
+    if (plan) {
+      setSelectedPlan(plan);
+    }
+  }, []);
 
   const particlesInit = useCallback(async (engine: Engine) => {
     await loadSlim(engine);
@@ -100,8 +109,18 @@ export default function Register() {
       const result = await register(name, email, password);
 
       if (result.success && result.userId) {
-        // Redirecionar para a página de seleção de planos
-        router.push(`/register/plan?userId=${result.userId}`);
+        // Se tiver um plano pré-selecionado (da homepage), direcionar para checkout desse plano
+        if (selectedPlan) {
+          // Este é o fluxo para planos pagos (Premium e VIP)
+          router.push(
+            `/register/plan?userId=${result.userId}&preselected=${selectedPlan}`
+          );
+          // Limpar o plano selecionado do localStorage
+          localStorage.removeItem("selectedPlan");
+        } else {
+          // Fluxo padrão - redirecionar para a página de seleção de planos
+          router.push(`/register/plan?userId=${result.userId}`);
+        }
       } else {
         setErrors({
           general: "Não foi possível criar sua conta. Tente novamente.",
