@@ -146,31 +146,119 @@ export default function PartnersPage() {
     new Set(partnersData.flatMap((partner) => partner.tags))
   ).sort();
 
-  // Filtrar parceiros com base nos critérios de busca
-  const filteredPartners = partnersData.filter((partner) => {
-    // Filtrar por termo de busca
-    const searchMatch =
-      partner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      partner.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      partner.personality.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      partner.interests.some((interest) =>
-        interest.toLowerCase().includes(searchTerm.toLowerCase())
+  // Calcular a compatibilidade com base no perfil do usuário
+  const calculateCompatibility = (partner: Partner) => {
+    // Se o usuário não tiver perfil emocional, use a compatibilidade padrão
+    if (!user?.emotionalProfile) {
+      return partner.compatibility;
+    }
+
+    const ep = user.emotionalProfile;
+    let score = 0;
+    let totalPoints = 0;
+
+    // Interesses compartilhados (até 30 pontos)
+    if (ep.interests.length > 0) {
+      const sharedInterests = partner.interests.filter((interest) =>
+        ep.interests.includes(interest)
       );
+      const maxInterestScore = 30;
+      score +=
+        (sharedInterests.length / ep.interests.length) * maxInterestScore;
+      totalPoints += maxInterestScore;
+    }
 
-    // Filtrar por tags selecionadas
-    const tagMatch =
-      selectedTags.length === 0 ||
-      selectedTags.some((tag) => partner.tags.includes(tag));
+    // Traços de personalidade compatíveis (até 25 pontos)
+    if (ep.idealPartnerTraits.length > 0) {
+      const matchingTraits = partner.tags.filter((tag) =>
+        ep.idealPartnerTraits.includes(tag)
+      );
+      const maxTraitsScore = 25;
+      score +=
+        (matchingTraits.length / ep.idealPartnerTraits.length) * maxTraitsScore;
+      totalPoints += maxTraitsScore;
+    }
 
-    // Filtrar por status online
-    const onlineMatch = !showOnlyOnline || partner.isOnline;
+    // Estilo de comunicação (até 20 pontos)
+    if (ep.communicationStyle) {
+      const communicationMatch = partner.personality
+        .toLowerCase()
+        .includes(ep.communicationStyle.toLowerCase());
+      const maxCommScore = 20;
+      score += communicationMatch ? maxCommScore : 0;
+      totalPoints += maxCommScore;
+    }
 
-    // Filtrar por acesso ao plano (Premium ou não)
-    const premiumMatch =
-      !partner.isPremium || user?.plan === "premium" || user?.plan === "vip";
+    // Objetivos de companheirismo (até 15 pontos)
+    if (ep.companionshipGoals.length > 0) {
+      // Aqui normalmente você teria dados mais detalhados sobre os objetivos do parceiro
+      // Para simplificar, estamos usando uma correspondência aproximada baseada na descrição
+      const goalsMatch = ep.companionshipGoals.some((goal) =>
+        partner.description.toLowerCase().includes(goal.toLowerCase())
+      );
+      const maxGoalsScore = 15;
+      score += goalsMatch ? maxGoalsScore : 0;
+      totalPoints += maxGoalsScore;
+    }
 
-    return searchMatch && tagMatch && onlineMatch && premiumMatch;
-  });
+    // Ausência de incompatibilidades (até 10 pontos)
+    if (ep.dealBreakers.length > 0) {
+      // Neste caso, queremos verificar se o parceiro NÃO tem as incompatibilidades
+      const dealBreakerPresent = ep.dealBreakers.some((dealBreaker) =>
+        partner.description.toLowerCase().includes(dealBreaker.toLowerCase())
+      );
+      const maxDealBreakerScore = 10;
+      score += dealBreakerPresent ? 0 : maxDealBreakerScore;
+      totalPoints += maxDealBreakerScore;
+    }
+
+    // Calcular pontuação final (percentagem)
+    if (totalPoints === 0) return partner.compatibility; // Voltar ao padrão se não houver pontos
+
+    // Ajustar para uma faixa de 50-100% para sempre fornecer algumas opções
+    const calculatedScore = Math.round((score / totalPoints) * 50) + 50;
+
+    // Para parceiros premium, garantir uma compatibilidade mínima mais alta para usuários não premium
+    if (partner.isPremium && user?.plan !== "premium" && user?.plan !== "vip") {
+      return Math.min(calculatedScore, 70); // Limitar a 70% para usuários básicos
+    }
+
+    return calculatedScore;
+  };
+
+  // Processar parceiros com compatibilidade calculada
+  const partnersWithCompatibility = partnersData.map((partner) => ({
+    ...partner,
+    compatibility: calculateCompatibility(partner),
+  }));
+
+  // Filtrar parceiros com base nos critérios de busca
+  const filteredPartners = partnersWithCompatibility
+    .filter((partner) => {
+      // Filtrar por termo de busca
+      const searchMatch =
+        partner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        partner.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        partner.personality.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        partner.interests.some((interest) =>
+          interest.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+      // Filtrar por tags selecionadas
+      const tagMatch =
+        selectedTags.length === 0 ||
+        selectedTags.some((tag) => partner.tags.includes(tag));
+
+      // Filtrar por status online
+      const onlineMatch = !showOnlyOnline || partner.isOnline;
+
+      // Filtrar por acesso ao plano (Premium ou não)
+      const premiumMatch =
+        !partner.isPremium || user?.plan === "premium" || user?.plan === "vip";
+
+      return searchMatch && tagMatch && onlineMatch && premiumMatch;
+    })
+    .sort((a, b) => b.compatibility - a.compatibility); // Ordenar por compatibilidade
 
   // Toggle para selecionar/deselecionar uma tag
   const toggleTag = (tag: string) => {
@@ -198,6 +286,55 @@ export default function PartnersPage() {
           Encontre o parceiro ideal para conversas significativas
         </p>
       </div>
+
+      {/* Banner para configuração de perfil emocional (se ainda não tiver sido configurado) */}
+      {user?.emotionalProfile &&
+        Object.values(user.emotionalProfile).flat().filter(Boolean).length ===
+          0 && (
+          <div className="mb-6 bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start">
+            <div className="text-blue-500 mr-3 mt-0.5">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-blue-800 mb-1">
+                Melhore suas compatibilidades
+              </h3>
+              <p className="text-sm text-blue-600 mb-2">
+                Configure seu perfil emocional para encontrar parceiros IA mais
+                compatíveis com suas preferências e personalidade.
+              </p>
+              <Link
+                href="/dashboard/settings"
+                className="inline-flex items-center text-xs font-medium text-blue-700 hover:text-blue-800"
+              >
+                <span>Configurar perfil</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 ml-1"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        )}
 
       {/* Filtros e busca */}
       <div className="mb-6 bg-white rounded-xl shadow-sm p-4">

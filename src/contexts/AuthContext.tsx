@@ -5,12 +5,30 @@ import { useRouter } from "next/navigation";
 
 type PlanType = "basic" | "premium" | "vip" | null;
 
+// Interface para o perfil emocional
+interface EmotionalProfile {
+  personalityTraits: string[];
+  interests: string[];
+  companionshipGoals: string[];
+  communicationStyle: string;
+  emotionalNeeds: string[];
+  idealPartnerTraits: string[];
+  dealBreakers: string[];
+}
+
 interface User {
   id: string;
   name: string;
   email: string;
   emailVerified: boolean;
   plan?: PlanType;
+  emotionalProfile?: EmotionalProfile;
+}
+
+interface ProfileUpdateData {
+  name?: string;
+  email?: string;
+  emotionalProfile?: EmotionalProfile;
 }
 
 interface AuthContextType {
@@ -28,6 +46,7 @@ interface AuthContextType {
   logout: () => void;
   requestPasswordReset: (email: string) => Promise<boolean>;
   verifyEmail: (token: string) => Promise<boolean>;
+  updateUserProfile: (data: ProfileUpdateData) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,6 +87,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: TEST_EMAIL,
           emailVerified: true,
           plan: "premium",
+          emotionalProfile: {
+            personalityTraits: ["Empático", "Criativo", "Introvertido"],
+            interests: ["Literatura", "Música", "Tecnologia", "Filosofia"],
+            companionshipGoals: ["Conversas profundas", "Crescimento pessoal"],
+            communicationStyle: "Reflexivo e profundo",
+            emotionalNeeds: ["Escuta ativa", "Compreensão sem julgamentos"],
+            idealPartnerTraits: ["Inteligente", "Empático", "Calmo"],
+            dealBreakers: ["Negatividade constante", "Falta de empatia"],
+          },
         };
 
         const testToken = "jwt-token-test";
@@ -94,6 +122,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: email,
         emailVerified: true,
         plan: "basic",
+        emotionalProfile: {
+          personalityTraits: [],
+          interests: [],
+          companionshipGoals: [],
+          communicationStyle: "",
+          emotionalNeeds: [],
+          idealPartnerTraits: [],
+          dealBreakers: [],
+        },
       };
 
       const mockToken = "jwt-token-example";
@@ -109,6 +146,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return true;
     } catch (error) {
       console.error("Erro no login:", error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Atualizar perfil do usuário
+  const updateUserProfile = async (
+    data: ProfileUpdateData
+  ): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+
+      if (!user) {
+        return false;
+      }
+
+      // Simulação de chamada de API
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Atualizar os dados do usuário
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      return true;
+    } catch (error) {
+      console.error("Erro ao atualizar perfil:", error);
       return false;
     } finally {
       setIsLoading(false);
@@ -166,6 +231,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: localStorage.getItem("tempUserEmail") || "email@exemplo.com",
         emailVerified: false,
         plan: plan,
+        emotionalProfile: {
+          personalityTraits: [],
+          interests: [],
+          companionshipGoals: [],
+          communicationStyle: "",
+          emotionalNeeds: [],
+          idealPartnerTraits: [],
+          dealBreakers: [],
+        },
       };
 
       const mockToken = "jwt-token-example";
@@ -260,6 +334,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         requestPasswordReset,
         verifyEmail,
+        updateUserProfile,
       }}
     >
       {children}
