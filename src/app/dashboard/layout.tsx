@@ -13,7 +13,6 @@ export default function DashboardLayout({
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
   const [activePage, setActivePage] = useState("home");
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Redirecionar para login se não estiver autenticado
   useEffect(() => {
