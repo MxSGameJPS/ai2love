@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-import Image from "next/image";
 
 // Tipo para planos
 type PlanType = "basic" | "premium" | "vip";
@@ -32,7 +31,8 @@ const PlanCard = ({
   buttonColor,
   popular = false,
   onSelect,
-}: PlanProps & { onSelect: (plan: PlanType) => void }) => {
+  isLoading,
+}: PlanProps & { onSelect: (plan: PlanType) => void; isLoading: boolean }) => {
   return (
     <div
       className={`bg-white rounded-xl shadow-md overflow-hidden relative ${
@@ -81,16 +81,20 @@ const PlanCard = ({
 
         <button
           onClick={() => onSelect(type)}
-          className={`w-full py-3 rounded-full text-white font-medium ${buttonColor} mt-auto`}
+          className={`w-full py-3 rounded-full text-white font-medium ${buttonColor} mt-auto ${
+            isLoading ? "opacity-70 cursor-not-allowed" : ""
+          }`}
+          disabled={isLoading}
         >
-          {buttonText}
+          {isLoading ? "Processando..." : buttonText}
         </button>
       </div>
     </div>
   );
 };
 
-export default function PlanSelectPage() {
+// Componente principal envolto em Suspense
+function PlanSelectContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
@@ -226,10 +230,30 @@ export default function PlanSelectPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {plans.map((plan) => (
-            <PlanCard key={plan.type} {...plan} onSelect={handleSelectPlan} />
+            <PlanCard
+              key={plan.type}
+              {...plan}
+              onSelect={handleSelectPlan}
+              isLoading={isLoading}
+            />
           ))}
         </div>
       </div>
     </div>
+  );
+}
+
+// Componente pai que envolve com Suspense
+export default function PlanSelectPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+        </div>
+      }
+    >
+      <PlanSelectContent />
+    </Suspense>
   );
 }

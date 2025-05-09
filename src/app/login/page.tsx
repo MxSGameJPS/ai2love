@@ -87,11 +87,11 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="flex flex-col min-h-screen md:flex-row">
       {/* Botão de voltar */}
       <Link
         href="/"
-        className="absolute top-4 left-4 z-50 flex items-center text-gray-800 hover:text-pink-500 transition-colors"
+        className="absolute z-50 flex items-center text-gray-800 transition-colors top-4 left-4 hover:text-pink-500"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -112,7 +112,7 @@ export default function Login() {
       </Link>
 
       {/* Lado esquerdo - Formulário de login */}
-      <div className="flex flex-col items-center justify-center w-full px-3 py-6 bg-white order-2 md:order-1 md:w-1/2 md:px-8 lg:px-16">
+      <div className="flex flex-col items-center justify-center order-2 w-full px-3 py-6 bg-white md:order-1 md:w-1/2 md:px-8 lg:px-16">
         <div className="w-full max-w-sm">
           <h1 className="mb-6 text-xl font-bold text-center text-pink-500">
             <span className="logo-gradient-ai">AI</span>
@@ -128,7 +128,7 @@ export default function Login() {
           </p>
 
           {errors.general && (
-            <div className="mb-4 p-2 bg-red-50 border border-red-200 text-red-600 text-xs rounded">
+            <div className="p-2 mb-4 text-xs text-red-600 border border-red-200 rounded bg-red-50">
               {errors.general}
             </div>
           )}
@@ -291,7 +291,7 @@ export default function Login() {
       </div>
 
       {/* Lado direito - Gradiente e testemunho */}
-      <div className="relative hidden overflow-hidden text-white md:block md:w-1/2 order-1 md:order-2 bg-gradient-to-br from-pink-500 to-purple-700">
+      <div className="relative order-1 hidden overflow-hidden text-white md:block md:w-1/2 md:order-2 bg-gradient-to-br from-pink-500 to-purple-700">
         <div className="absolute inset-0" style={{ zIndex: 0 }}>
           <Particles
             id="tsparticles-login"

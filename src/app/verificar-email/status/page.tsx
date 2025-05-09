@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function StatusVerificacaoEmail() {
   const { user } = useAuth();
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const status = searchParams.get("status") || "pendente";
 
   useEffect(() => {
     // Se o usuário não estiver logado, redirecionar para o login

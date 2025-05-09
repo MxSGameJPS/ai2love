@@ -127,11 +127,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Simulação de chamada de API
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      // Salvar temporariamente os dados para usar depois
+      localStorage.setItem("tempUserName", name);
+      localStorage.setItem("tempUserEmail", email);
+      // A senha seria enviada para a API, não armazenada localmente
+      console.log(
+        `Registrando usuário: ${name}, ${email}, senha: ${password.length} caracteres`
+      );
+
       // Simulando um registro bem-sucedido (sem token e usuário completo ainda)
       // Agora retornamos apenas um ID temporário para usar na seleção de plano
       const tempUserId = "newuser" + Date.now();
-
-      // Aqui não salvamos nada no localStorage ainda, pois primeiro o usuário precisa escolher um plano
 
       return { success: true, userId: tempUserId };
     } catch (error) {
@@ -203,6 +209,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Em uma implementação real, a API enviaria um email de recuperação
+      console.log(`Solicitando recuperação de senha para: ${email}`);
+
       return true;
     } catch (error) {
       console.error("Erro na recuperação de senha:", error);
@@ -222,6 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Em uma implementação real, você verificaria o token na API
       // e atualizaria o status de verificação do usuário
+      console.log(`Verificando email com token: ${token}`);
 
       if (user) {
         const updatedUser = { ...user, emailVerified: true };

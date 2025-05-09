@@ -49,13 +49,22 @@ export default function ProfilePage() {
 
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
-      setFormData({
-        ...formData,
-        [parent]: {
-          ...formData[parent as keyof typeof formData],
-          [child]: checked,
-        },
-      });
+
+      // Verificar se parent existe em formData e é um objeto
+      const parentValue = formData[parent as keyof typeof formData];
+      if (
+        parentValue &&
+        typeof parentValue === "object" &&
+        !Array.isArray(parentValue)
+      ) {
+        setFormData({
+          ...formData,
+          [parent]: {
+            ...parentValue,
+            [child]: checked,
+          },
+        });
+      }
     } else {
       setFormData({
         ...formData,

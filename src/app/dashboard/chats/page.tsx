@@ -87,7 +87,7 @@ const chatsData: Chat[] = [
 ];
 
 export default function ChatsPage() {
-  const { user } = useAuth();
+  const {} = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<"all" | "unread" | "pinned">("all");
 
