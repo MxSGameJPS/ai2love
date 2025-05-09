@@ -139,6 +139,7 @@ export default function PartnersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showOnlyOnline, setShowOnlyOnline] = useState(false);
+  const [expandedPartners, setExpandedPartners] = useState<string[]>([]);
 
   // Extrair todas as tags únicas dos parceiros
   const allTags = Array.from(
@@ -180,17 +181,26 @@ export default function PartnersPage() {
     }
   };
 
+  // Toggle para expandir/colapsar detalhes do parceiro
+  const togglePartnerDetails = (partnerId: string) => {
+    if (expandedPartners.includes(partnerId)) {
+      setExpandedPartners(expandedPartners.filter((id) => id !== partnerId));
+    } else {
+      setExpandedPartners([...expandedPartners, partnerId]);
+    }
+  };
+
   return (
-    <div className="max-w-6xl p-10 mx-auto">
-      <div className="mb-8">
-        <h1 className="mb-2 text-2xl font-bold text-gray-800">Parceiros IA</h1>
+    <div className="p-4 mx-auto max-w-6xl sm:p-6 md:p-8">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Parceiros IA</h1>
         <p className="text-gray-600">
           Encontre o parceiro ideal para conversas significativas
         </p>
       </div>
 
       {/* Filtros e busca */}
-      <div className="p-4 mb-6 bg-white shadow-sm rounded-xl">
+      <div className="mb-6 bg-white rounded-xl shadow-sm p-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
           <div className="relative flex-grow">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -212,7 +222,7 @@ export default function PartnersPage() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por nome, personalidade ou interesses..."
+              placeholder="Buscar parceiros..."
               className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
@@ -226,7 +236,7 @@ export default function PartnersPage() {
               className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
             />
             <label htmlFor="onlineOnly" className="ml-2 text-sm text-gray-700">
-              Mostrar apenas online
+              Apenas online
             </label>
           </div>
         </div>
@@ -241,7 +251,7 @@ export default function PartnersPage() {
               <button
                 key={tag}
                 onClick={() => toggleTag(tag)}
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                   selectedTags.includes(tag)
                     ? "bg-purple-500 text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -289,62 +299,61 @@ export default function PartnersPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredPartners.map((partner) => (
-            <Link
+            <div
               key={partner.id}
-              href={`/dashboard/chat/${partner.id}`}
-              className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 relative flex flex-col`}
+              className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100"
             >
-              {partner.isPremium && (
-                <div className="absolute top-0 right-0 z-10 px-3 py-1 text-xs font-bold text-white rounded-bl-lg bg-gradient-to-r from-yellow-400 to-yellow-500">
-                  PREMIUM
-                </div>
-              )}
-
-              <div className="flex-grow p-6">
-                <div className="flex items-start mb-4">
-                  <div className="relative">
-                    <Image
-                      src={partner.avatar}
-                      alt={partner.name}
-                      width={64}
-                      height={64}
-                      className="object-cover rounded-full"
-                    />
-                    <div
-                      className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                        partner.isOnline ? "bg-green-500" : "bg-gray-400"
-                      }`}
-                    ></div>
+              {/* Cabeçalho do card */}
+              <div className="relative">
+                {/* Tag Premium */}
+                {partner.isPremium && (
+                  <div className="absolute top-0 right-0 z-10 px-3 py-1 text-xs font-bold text-white rounded-bl-lg bg-gradient-to-r from-yellow-400 to-yellow-500">
+                    PREMIUM
                   </div>
+                )}
 
-                  <div className="flex-1 ml-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-semibold text-gray-800">
-                          {partner.name}
-                        </h3>
-                        <p className="text-xs text-gray-500">
-                          {partner.isOnline ? "Online" : "Offline"}
-                        </p>
-                      </div>
-                      <div className="px-2 py-1 text-xs font-medium text-purple-800 bg-purple-100 rounded-full">
-                        {partner.compatibility}% compatível
-                      </div>
+                {/* Background gradiente e avatar */}
+                <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 pb-14 relative">
+                  <div className="absolute -bottom-8 left-4">
+                    <div className="relative">
+                      <Image
+                        src={partner.avatar}
+                        alt={partner.name}
+                        width={64}
+                        height={64}
+                        className="object-cover rounded-full border-2 border-white"
+                      />
+                      <div
+                        className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${
+                          partner.isOnline ? "bg-green-500" : "bg-gray-400"
+                        }`}
+                      ></div>
                     </div>
-                    <p className="mt-1 text-sm font-medium text-gray-600">
+                  </div>
+                </div>
+              </div>
+
+              {/* Conteúdo principal */}
+              <div className="p-4 pt-10">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-semibold text-gray-800 text-lg">
+                      {partner.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-0.5">
                       {partner.personality}
                     </p>
                   </div>
+                  <div className="px-2 py-1 text-xs font-medium text-purple-800 bg-purple-100 rounded-full">
+                    {partner.compatibility}% compatível
+                  </div>
                 </div>
 
-                <p className="mb-4 text-sm text-gray-600 line-clamp-3">
-                  {partner.description}
-                </p>
-
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {partner.tags.map((tag, index) => (
+                {/* Tags principais - limitadas a 3 */}
+                <div className="flex flex-wrap gap-2 my-3">
+                  {partner.tags.slice(0, 3).map((tag, index) => (
                     <span
                       key={index}
                       className="px-2 py-1 text-xs text-gray-600 bg-gray-100 rounded-full"
@@ -354,37 +363,92 @@ export default function PartnersPage() {
                   ))}
                 </div>
 
-                <div>
-                  <h4 className="mb-2 text-xs font-medium text-gray-500">
-                    Interesses
-                  </h4>
-                  <div className="flex flex-wrap gap-1">
-                    {partner.interests.map((interest, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-0.5 bg-purple-50 text-purple-700 text-xs rounded"
+                {/* Descrição */}
+                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                  {partner.description}
+                </p>
+
+                {/* Botão para expandir/colapsar detalhes */}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    togglePartnerDetails(partner.id);
+                  }}
+                  className="text-xs text-purple-600 hover:text-purple-800 font-medium flex items-center"
+                >
+                  {expandedPartners.includes(partner.id) ? (
+                    <>
+                      <span>Mostrar menos</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 ml-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
                       >
-                        {interest}
-                      </span>
-                    ))}
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 15l7-7 7 7"
+                        />
+                      </svg>
+                    </>
+                  ) : (
+                    <>
+                      <span>Mostrar mais</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 ml-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </>
+                  )}
+                </button>
+
+                {/* Detalhes escondidos/colapsáveis */}
+                {expandedPartners.includes(partner.id) && (
+                  <div className="mt-4 pt-4 border-t border-gray-100 animate-fadeIn">
+                    {/* Interesses */}
+                    <div className="mb-4">
+                      <h4 className="text-xs font-medium text-gray-500 mb-2">
+                        Interesses
+                      </h4>
+                      <div className="flex flex-wrap gap-1">
+                        {partner.interests.map((interest, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-0.5 bg-purple-50 text-purple-700 text-xs rounded"
+                          >
+                            {interest}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              <div className="px-6 py-3 border-t border-gray-100 bg-gray-50">
+              {/* Rodapé do card */}
+              <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 mt-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500">
                     {partner.isOnline
                       ? "Disponível para conversa"
                       : "Responde em até 1 hora"}
                   </span>
-                  <button
-                    className="inline-flex items-center justify-center px-4 py-1.5 bg-purple-600 text-white text-sm font-medium rounded-full hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.href = `/dashboard/chat/${partner.id}`;
-                    }}
-                    aria-label={`Iniciar conversa com ${partner.name}`}
+                  <Link
+                    href={`/dashboard/chat/${partner.id}`}
+                    className="inline-flex items-center justify-center px-4 py-1.5 bg-purple-600 text-white text-sm font-medium rounded-full hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -400,10 +464,10 @@ export default function PartnersPage() {
                       />
                     </svg>
                     Conversar
-                  </button>
+                  </Link>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}
