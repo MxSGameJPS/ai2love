@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer className="bg-black text-gray-300 pt-16 pb-8 px-6">
@@ -15,7 +17,12 @@ export default function Footer() {
               adaptam às suas necessidades.
             </p>
             <div className="flex space-x-4 mt-6">
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white"
+              >
                 <svg
                   className="w-5 h-5"
                   fill="currentColor"
@@ -29,7 +36,12 @@ export default function Footer() {
                   />
                 </svg>
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white"
+              >
                 <svg
                   className="w-5 h-5"
                   fill="currentColor"
@@ -39,7 +51,12 @@ export default function Footer() {
                   <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
                 </svg>
               </a>
-              <a href="#" className="text-gray-400 hover:text-white">
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white"
+              >
                 <svg
                   className="w-5 h-5"
                   fill="currentColor"
@@ -61,19 +78,28 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4">Empresa</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                <Link
+                  href="/sobre"
+                  className="text-gray-400 hover:text-white text-sm"
+                >
                   Sobre Nós
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                <Link
+                  href="/carreiras"
+                  className="text-gray-400 hover:text-white text-sm"
+                >
                   Carreiras
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                <Link
+                  href="/blog"
+                  className="text-gray-400 hover:text-white text-sm"
+                >
                   Blog
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -83,19 +109,28 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4">Recursos</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                <Link
+                  href="/planos"
+                  className="text-gray-400 hover:text-white text-sm"
+                >
                   Planos
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                <Link
+                  href="/faq"
+                  className="text-gray-400 hover:text-white text-sm"
+                >
                   Perguntas Frequentes
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                <Link
+                  href="/suporte"
+                  className="text-gray-400 hover:text-white text-sm"
+                >
                   Suporte
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -105,19 +140,28 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                <Link
+                  href="/privacidade"
+                  className="text-gray-400 hover:text-white text-sm"
+                >
                   Privacidade
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                <Link
+                  href="/termos"
+                  className="text-gray-400 hover:text-white text-sm"
+                >
                   Termos de Uso
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white text-sm">
+                <Link
+                  href="/cookies"
+                  className="text-gray-400 hover:text-white text-sm"
+                >
                   Cookies
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -126,7 +170,8 @@ export default function Footer() {
         {/* Linha divisória e copyright */}
         <div className="border-t border-gray-800 mt-12 pt-6">
           <p className="text-sm text-gray-500">
-            © 2023 AI to Love. Todos os direitos reservados.
+            © {new Date().getFullYear()} AI to Love. Todos os direitos
+            reservados.
           </p>
         </div>
       </div>

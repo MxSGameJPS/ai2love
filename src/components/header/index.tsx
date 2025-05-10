@@ -75,12 +75,12 @@ export default function Header() {
         >
           Planos
         </Link>
-        <a
-          href="#"
+        <Link
+          href="/sobre"
           className="text-gray-700 transition-colors hover:text-pink-500"
         >
           Sobre
-        </a>
+        </Link>
       </nav>
 
       {/* Botões para desktop */}
@@ -161,7 +161,7 @@ export default function Header() {
                       ? "/"
                       : item === "Planos"
                       ? "/planos"
-                      : "#"
+                      : "/sobre"
                   }
                   className="text-gray-700 hover:text-pink-500 py-1.5 px-2 rounded-md hover:bg-pink-50 transition-colors"
                   initial={{ opacity: 0, x: -20 }}
