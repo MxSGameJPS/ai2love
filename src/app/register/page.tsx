@@ -15,6 +15,8 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [birthdate, setBirthdate] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [particleCount] = useState(70);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -23,6 +25,8 @@ export default function Register() {
     email?: string;
     password?: string;
     confirmPassword?: string;
+    cpf?: string;
+    birthdate?: string;
     agreeTerms?: string;
     general?: string;
   }>({});
@@ -82,6 +86,34 @@ export default function Register() {
       newErrors.confirmPassword = "As senhas não coincidem";
     }
 
+    // Validar CPF
+    if (!cpf) {
+      newErrors.cpf = "CPF é obrigatório";
+    } else if (!/^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$/.test(cpf)) {
+      newErrors.cpf = "CPF inválido";
+    }
+
+    // Validar data de nascimento
+    if (!birthdate) {
+      newErrors.birthdate = "Data de nascimento é obrigatória";
+    } else {
+      const birthdateDate = new Date(birthdate);
+      const today = new Date();
+      const age = today.getFullYear() - birthdateDate.getFullYear();
+      const monthDiff = today.getMonth() - birthdateDate.getMonth();
+
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthdateDate.getDate())
+      ) {
+        age--;
+      }
+
+      if (age < 18) {
+        newErrors.birthdate = "Você deve ter pelo menos 18 anos";
+      }
+    }
+
     // Validar termos
     if (!agreeTerms) {
       newErrors.agreeTerms = "Você deve concordar com os termos";
@@ -104,9 +136,15 @@ export default function Register() {
       // Armazenar temporariamente os dados do usuário para uso na seleção de plano
       localStorage.setItem("tempUserName", name);
       localStorage.setItem("tempUserEmail", email);
-      localStorage.setItem("tempUserPassword", password); // Em produção, é melhor não armazenar senhas assim
 
-      const result = await register(name, email, password);
+      const result = await register(
+        name,
+        email,
+        password,
+        cpf,
+        agreeTerms,
+        birthdate
+      );
 
       if (result.success && result.userId) {
         // Se tiver um plano pré-selecionado (da homepage), direcionar para checkout desse plano
@@ -371,6 +409,51 @@ export default function Register() {
               />
               {errors.email && (
                 <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="cpf"
+                className="block mb-1 text-xs font-medium text-gray-700"
+              >
+                CPF
+              </label>
+              <input
+                id="cpf"
+                type="text"
+                value={cpf}
+                onChange={(e) => setCpf(e.target.value)}
+                placeholder="000.000.000-00"
+                className={`w-full px-3 py-2 text-sm border ${
+                  errors.cpf ? "border-red-500" : "border-gray-300"
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                required
+              />
+              {errors.cpf && (
+                <p className="mt-1 text-xs text-red-500">{errors.cpf}</p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="birthdate"
+                className="block mb-1 text-xs font-medium text-gray-700"
+              >
+                Data de Nascimento
+              </label>
+              <input
+                id="birthdate"
+                type="date"
+                value={birthdate}
+                onChange={(e) => setBirthdate(e.target.value)}
+                className={`w-full px-3 py-2 text-sm border ${
+                  errors.birthdate ? "border-red-500" : "border-gray-300"
+                } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                required
+              />
+              {errors.birthdate && (
+                <p className="mt-1 text-xs text-red-500">{errors.birthdate}</p>
               )}
             </div>
 

@@ -2,8 +2,11 @@
 
 import PriceCard from "../cards/PriceCard";
 import { motion } from "framer-motion";
+import { usePlans } from "@/contexts/PlanContext";
 
 export default function Plans() {
+  const { plans, isLoading, error } = usePlans();
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -28,6 +31,52 @@ export default function Plans() {
     },
   };
 
+  // Planos estáticos de fallback caso a API esteja indisponível ou o carregamento ainda não tenha ocorrido
+  const staticPlans = [
+    {
+      id: "basic_static",
+      createdAt: new Date().toISOString(),
+      name: "Básico",
+      description: "Para quem está começando a explorar.",
+      price: 0,
+      billingCycle: "monthly",
+      maxConversationLimit: 5,
+      hasVoiceCalls: false,
+      hasVideoCalls: false,
+      isActive: true,
+      listOfExclusiveContent: 0,
+    },
+    {
+      id: "premium_static",
+      createdAt: new Date().toISOString(),
+      name: "Premium",
+      description: "Para quem deseja uma experiência mais completa.",
+      price: 29.9,
+      billingCycle: "monthly",
+      maxConversationLimit: 0, // ilimitado
+      hasVoiceCalls: true,
+      hasVideoCalls: false,
+      isActive: true,
+      listOfExclusiveContent: 5,
+    },
+    {
+      id: "vip_static",
+      createdAt: new Date().toISOString(),
+      name: "VIP",
+      description: "A experiência definitiva para conexões profundas.",
+      price: 49.9,
+      billingCycle: "monthly",
+      maxConversationLimit: 0, // ilimitado
+      hasVoiceCalls: true,
+      hasVideoCalls: true,
+      isActive: true,
+      listOfExclusiveContent: 15,
+    },
+  ];
+
+  // Use planos da API se disponíveis, caso contrário use os estáticos
+  const displayPlans = plans.length > 0 ? plans : staticPlans;
+
   return (
     <section
       className="py-20 px-6 w-full"
@@ -49,6 +98,12 @@ export default function Plans() {
             Escolha o plano ideal para suas necessidades e comece a se conectar
             com nossas IAs.
           </p>
+
+          {error && (
+            <p className="mt-4 text-sm text-pink-600 bg-pink-50 p-2 rounded inline-block">
+              {error}
+            </p>
+          )}
         </motion.div>
 
         {/* Cards de planos */}
@@ -59,55 +114,26 @@ export default function Plans() {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
         >
-          {/* Plano Básico */}
-          <PriceCard
-            title="Básico"
-            price="Grátis"
-            description="Para quem está começando a explorar."
-            isPopular={false}
-            features={[
-              "Acesso a 3 IAs básicas",
-              "5 conversas por dia",
-              "Personalização limitada",
-              "Suporte por email",
-            ]}
-            buttonText="Começar Grátis"
-            buttonColor="bg-indigo-600 hover:bg-indigo-700"
-          />
-
-          {/* Plano Premium */}
-          <PriceCard
-            title="Premium"
-            price="R$29,90"
-            description="Para quem deseja uma experiência mais completa."
-            isPopular={true}
-            features={[
-              "Acesso a todas as IAs",
-              "Conversas ilimitadas",
-              "Personalização avançada",
-              "Suporte prioritário",
-              "Sem anúncios",
-            ]}
-            buttonText="Escolher Premium"
-            buttonColor="bg-pink-500 hover:bg-pink-600"
-          />
-
-          {/* Plano VIP */}
-          <PriceCard
-            title="VIP"
-            price="R$49,90"
-            description="A experiência definitiva para conexões profundas."
-            isPopular={false}
-            features={[
-              "Todos os benefícios Premium",
-              "IAs exclusivas VIP",
-              "Personalização total",
-              "Recursos experimentais",
-              "Atendimento 24/7",
-            ]}
-            buttonText="Escolher VIP"
-            buttonColor="bg-indigo-600 hover:bg-indigo-700"
-          />
+          {isLoading ? (
+            // Mostrar indicador de carregamento
+            <div className="col-span-3 flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
+            </div>
+          ) : (
+            // Renderizar os planos
+            displayPlans.map((plan, index) => (
+              <PriceCard
+                key={plan.id}
+                plan={plan}
+                isPopular={index === 1} // Normalmente o plano Premium é o mais popular
+                buttonColor={
+                  index === 1
+                    ? "bg-pink-500 hover:bg-pink-600"
+                    : "bg-indigo-600 hover:bg-indigo-700"
+                }
+              />
+            ))
+          )}
         </motion.div>
       </div>
     </section>

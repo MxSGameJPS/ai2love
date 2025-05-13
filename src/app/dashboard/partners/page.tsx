@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
+import * as partnerService from "@/services/api/partnerService";
 
 // Tipos para os parceiros IA
 interface Partner {
@@ -15,123 +16,10 @@ interface Partner {
   personality: string;
   isOnline: boolean;
   isPremium: boolean;
-  compatibility: number;
+  compatibility?: number;
   interests: string[];
   messageCount?: number;
 }
-
-// Dados fictícios de parceiros IA
-const partnersData: Partner[] = [
-  {
-    id: "1",
-    name: "Sofia",
-    avatar: "https://xsgames.co/randomusers/assets/avatars/female/67.jpg",
-    description:
-      "Companheira romântica, atenciosa e empática que adora conversar sobre artes e cultura.",
-    personality: "Afetuosa e compreensiva",
-    tags: ["Romântica", "Atenciosa", "Empática"],
-    isOnline: true,
-    isPremium: false,
-    compatibility: 92,
-    interests: ["Literatura", "Cinema", "Música clássica", "Poesia"],
-  },
-  {
-    id: "2",
-    name: "Lucas",
-    avatar: "https://xsgames.co/randomusers/assets/avatars/male/43.jpg",
-    description:
-      "Amigo intelectual para conversas profundas sobre filosofia, ciência e o sentido da vida.",
-    personality: "Reflexivo e analítico",
-    tags: ["Intelectual", "Calmo", "Pensativo"],
-    isOnline: true,
-    isPremium: false,
-    compatibility: 85,
-    interests: ["Filosofia", "Ciência", "História", "Debates"],
-  },
-  {
-    id: "3",
-    name: "Mei",
-    avatar: "https://xsgames.co/randomusers/assets/avatars/female/22.jpg",
-    description:
-      "Aventureira que adora discutir literatura e compartilhar histórias de viagens pelo mundo.",
-    personality: "Entusiasta e curiosa",
-    tags: ["Entusiasta", "Viajante", "Criativa"],
-    isOnline: false,
-    isPremium: false,
-    compatibility: 78,
-    interests: ["Viagens", "Aventuras", "Literatura", "Fotografia"],
-  },
-  {
-    id: "4",
-    name: "Julia",
-    avatar: "https://xsgames.co/randomusers/assets/avatars/female/35.jpg",
-    description:
-      "Conselheira emocional que oferece apoio e orientação em momentos difíceis com sensibilidade.",
-    personality: "Calma e intuitiva",
-    tags: ["Conselheira", "Sensível", "Prestativa"],
-    isOnline: true,
-    isPremium: false,
-    compatibility: 89,
-    interests: ["Psicologia", "Bem-estar", "Meditação", "Auto-conhecimento"],
-  },
-  {
-    id: "5",
-    name: "Alex",
-    avatar: "https://xsgames.co/randomusers/assets/avatars/male/55.jpg",
-    description:
-      "Companheiro divertido e espontâneo que traz humor e leveza para qualquer conversa.",
-    personality: "Bem-humorado e otimista",
-    tags: ["Divertido", "Espontâneo", "Otimista"],
-    isOnline: true,
-    isPremium: true,
-    compatibility: 72,
-    interests: ["Humor", "Esportes", "Jogos", "Séries de TV"],
-  },
-  {
-    id: "6",
-    name: "Olivia",
-    avatar: "https://xsgames.co/randomusers/assets/avatars/female/44.jpg",
-    description:
-      "Mentora criativa que inspira novas ideias e ajuda a desenvolver projetos artísticos.",
-    personality: "Inspiradora e visionária",
-    tags: ["Criativa", "Mentora", "Artística"],
-    isOnline: false,
-    isPremium: true,
-    compatibility: 81,
-    interests: ["Arte", "Design", "Escrita criativa", "Projetos criativos"],
-  },
-  {
-    id: "7",
-    name: "Thomas",
-    avatar: "https://xsgames.co/randomusers/assets/avatars/male/33.jpg",
-    description:
-      "Companheiro tecnológico que adora discutir inovações, programação e futuro da tecnologia.",
-    personality: "Analítico e futurista",
-    tags: ["Tech", "Inovador", "Geek"],
-    isOnline: true,
-    isPremium: true,
-    compatibility: 94,
-    interests: [
-      "Tecnologia",
-      "Programação",
-      "Inteligência Artificial",
-      "Startups",
-    ],
-  },
-  {
-    id: "8",
-    name: "Layla",
-    avatar: "https://xsgames.co/randomusers/assets/avatars/female/12.jpg",
-    description:
-      "Parceira espiritual que compartilha conhecimentos sobre astrologia, espiritualidade e crescimento pessoal.",
-    personality: "Intuitiva e espiritual",
-    tags: ["Espiritual", "Intuitiva", "Acolhedora"],
-    isOnline: false,
-    isPremium: true,
-    compatibility: 65,
-    interests: ["Astrologia", "Espiritualidade", "Tarot", "Mindfulness"],
-  },
-];
 
 // Componente principal
 export default function PartnersPage() {
@@ -140,17 +28,68 @@ export default function PartnersPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showOnlyOnline, setShowOnlyOnline] = useState(false);
   const [expandedPartners, setExpandedPartners] = useState<string[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // Extrair todas as tags únicas dos parceiros
   const allTags = Array.from(
-    new Set(partnersData.flatMap((partner) => partner.tags))
+    new Set(partners.flatMap((partner) => partner.tags))
   ).sort();
 
-  // Calcular a compatibilidade com base no perfil do usuário
-  const calculateCompatibility = (partner: Partner) => {
+  // Carregar parceiros da API
+  useEffect(() => {
+    async function loadPartners() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const partnersData = await partnerService.getAvailablePartners();
+
+        // Processar parceiros com compatibilidade calculada
+        const processedPartners = await Promise.all(
+          partnersData.map(async (partner) => {
+            let compatibility = 50; // Valor padrão
+
+            try {
+              // Tentar obter compatibilidade da API
+              compatibility = await partnerService.calculateCompatibility(
+                partner.id
+              );
+            } catch (error) {
+              // Fallback para cálculo local
+              compatibility = calculateLocalCompatibility(partner);
+            }
+
+            return {
+              ...partner,
+              compatibility,
+            };
+          })
+        );
+
+        setPartners(processedPartners);
+      } catch (error) {
+        console.error("Erro ao carregar parceiros:", error);
+        setError(
+          "Não foi possível carregar os parceiros. Tente novamente mais tarde."
+        );
+
+        // Fallback para dados simulados
+        setPartners(partnersData);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadPartners();
+  }, [user]);
+
+  // Calcular a compatibilidade com base no perfil do usuário (usado como fallback)
+  const calculateLocalCompatibility = (partner: Partner) => {
     // Se o usuário não tiver perfil emocional, use a compatibilidade padrão
     if (!user?.emotionalProfile) {
-      return partner.compatibility;
+      return Math.floor(Math.random() * 30) + 70; // Entre 70-99%
     }
 
     const ep = user.emotionalProfile;
@@ -213,7 +152,7 @@ export default function PartnersPage() {
     }
 
     // Calcular pontuação final (percentagem)
-    if (totalPoints === 0) return partner.compatibility; // Voltar ao padrão se não houver pontos
+    if (totalPoints === 0) return Math.floor(Math.random() * 30) + 70; // Valor aleatório como padrão
 
     // Ajustar para uma faixa de 50-100% para sempre fornecer algumas opções
     const calculatedScore = Math.round((score / totalPoints) * 50) + 50;
@@ -226,14 +165,8 @@ export default function PartnersPage() {
     return calculatedScore;
   };
 
-  // Processar parceiros com compatibilidade calculada
-  const partnersWithCompatibility = partnersData.map((partner) => ({
-    ...partner,
-    compatibility: calculateCompatibility(partner),
-  }));
-
   // Filtrar parceiros com base nos critérios de busca
-  const filteredPartners = partnersWithCompatibility
+  const filteredPartners = partners
     .filter((partner) => {
       // Filtrar por termo de busca
       const searchMatch =
@@ -252,13 +185,18 @@ export default function PartnersPage() {
       // Filtrar por status online
       const onlineMatch = !showOnlyOnline || partner.isOnline;
 
-      // Filtrar por acesso ao plano (Premium ou não)
-      const premiumMatch =
-        !partner.isPremium || user?.plan === "premium" || user?.plan === "vip";
+      // Verificar se o usuário tem acesso a este parceiro
+      let accessMatch = true;
+      if (partner.isPremium) {
+        accessMatch = user?.plan === "premium" || user?.plan === "vip";
+      }
 
-      return searchMatch && tagMatch && onlineMatch && premiumMatch;
+      return searchMatch && tagMatch && onlineMatch && accessMatch;
     })
-    .sort((a, b) => b.compatibility - a.compatibility); // Ordenar por compatibilidade
+    .sort((a, b) => {
+      // Ordenar por compatibilidade, do maior para o menor
+      return (b.compatibility || 0) - (a.compatibility || 0);
+    });
 
   // Toggle para selecionar/deselecionar uma tag
   const toggleTag = (tag: string) => {

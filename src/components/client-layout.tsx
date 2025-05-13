@@ -5,6 +5,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import BackgroundAnimation from "@/components/background-animation";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { PlanProvider } from "@/contexts/PlanContext";
 
 export default function ClientLayout({
   children,
@@ -22,10 +23,12 @@ export default function ClientLayout({
 
   return (
     <AuthProvider>
-      {!isAuthPage && <BackgroundAnimation />}
-      {!isAuthPage && <Header />}
-      {children}
-      {!isAuthPage && <Footer />}
+      <PlanProvider>
+        {!isAuthPage && <BackgroundAnimation />}
+        {!isAuthPage && <Header />}
+        {children}
+        {!isAuthPage && <Footer />}
+      </PlanProvider>
     </AuthProvider>
   );
 }

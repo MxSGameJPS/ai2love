@@ -1,20 +1,27 @@
 "use client";
 
-import { useState, useRef, ChangeEvent } from "react";
+import { useState, useRef, ChangeEvent, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlans } from "@/contexts/PlanContext";
+import * as paymentService from "@/services/api/paymentService";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const { plans, getPlanByType } = usePlans();
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const subscriptionRef = useRef<HTMLDivElement>(null);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [subscriptionMessage, setSubscriptionMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
+  const [nextBillingDate, setNextBillingDate] = useState<string>(""); // Novo estado para data de cobrança
 
   // Formulário
   const [formData, setFormData] = useState({
@@ -40,11 +47,47 @@ export default function ProfilePage() {
     confirmPassword?: string;
   }>({});
 
-  // Mapeamento de planos para valores mensais (simulados)
-  const planPrices = {
-    basic: "R$ 19,90",
-    premium: "R$ 49,90",
-    vip: "R$ 99,90",
+  // Efeito para buscar detalhes do plano do usuário
+  useEffect(() => {
+    // Simular uma data futura para próxima cobrança (em produção, viria da API)
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30);
+    setNextBillingDate(
+      futureDate.toLocaleDateString("pt-BR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    );
+  }, []);
+
+  // Efeito para rolar para a seção de assinatura quando a URL contiver #subscription
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.location.hash === "#subscription"
+    ) {
+      setTimeout(() => {
+        subscriptionRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+  }, []);
+
+  // Obter preços dos planos dinamicamente
+  const getPlanPrice = (planType: string): string => {
+    const plan = getPlanByType(planType as any);
+    if (plan) {
+      return `R$ ${plan.price.toFixed(2)}`;
+    }
+
+    // Preços padrão como fallback
+    const defaultPrices: Record<string, string> = {
+      basic: "R$ 19,90",
+      premium: "R$ 49,90",
+      vip: "R$ 99,90",
+    };
+
+    return defaultPrices[planType] || "R$ 0,00";
   };
 
   // Função para lidar com upgrade do plano
@@ -62,19 +105,53 @@ export default function ProfilePage() {
       setIsSubscriptionLoading(true);
       setSubscriptionMessage(null);
 
-      // Simular uma chamada para API de checkout
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Obter o ID do plano correto
+      const planObj = getPlanByType(newPlan);
 
-      // URL de checkout simulada
-      const checkoutUrl = `https://checkout.ai2love.com/upgrade?plan=${newPlan}&user=${user?.id}`;
+      if (!planObj || !user?.id) {
+        throw new Error("Dados insuficientes para realizar o upgrade");
+      }
 
-      // Abrir a URL de checkout em uma nova janela/aba
-      window.open(checkoutUrl, "_blank");
+      // Chamar a API de pagamento
+      const paymentResponse = await paymentService.createPayment(
+        user.id,
+        planObj.id
+      );
 
-      setSubscriptionMessage({
-        type: "success",
-        text: "Redirecionando para o checkout. Complete o pagamento para ativar seu novo plano.",
-      });
+      if (paymentResponse.success) {
+        setSubscriptionMessage({
+          type: "success",
+          text: "Pagamento processado com sucesso. Seu plano será atualizado em breve.",
+        });
+
+        // Poderíamos redirecionar para uma página de pagamento se necessário
+        if (paymentResponse.transactionId) {
+          // Verificar status do pagamento após alguns segundos
+          setTimeout(async () => {
+            try {
+              const statusResponse = await paymentService.checkPaymentStatus(
+                paymentResponse.transactionId!
+              );
+              if (statusResponse.success) {
+                // Aqui poderíamos atualizar o estado do usuário
+                setSubscriptionMessage({
+                  type: "success",
+                  text: "Seu plano foi atualizado com sucesso!",
+                });
+              }
+            } catch (error) {
+              console.error("Erro ao verificar status do pagamento:", error);
+            }
+          }, 3000);
+        }
+      } else {
+        setSubscriptionMessage({
+          type: "error",
+          text:
+            paymentResponse.message ||
+            "Ocorreu um erro ao processar o pagamento. Tente novamente.",
+        });
+      }
     } catch (error) {
       console.error("Erro ao processar upgrade:", error);
       setSubscriptionMessage({
@@ -92,7 +169,10 @@ export default function ProfilePage() {
       setIsSubscriptionLoading(true);
       setSubscriptionMessage(null);
 
-      // Simular uma chamada para API de cancelamento
+      // Aqui implementaríamos a chamada real para API de cancelamento
+      // await cancelSubscriptionApi(user.id);
+
+      // Por enquanto, simulamos o sucesso
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       setShowCancelConfirm(false);
@@ -251,7 +331,11 @@ export default function ProfilePage() {
       </div>
 
       {/* Seção de gerenciamento de assinatura */}
-      <div className="overflow-hidden bg-white shadow-sm rounded-xl mb-8">
+      <div
+        id="subscription"
+        ref={subscriptionRef}
+        className="overflow-hidden bg-white shadow-sm rounded-xl mb-8"
+      >
         <div className="p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">
             Minha Assinatura
@@ -277,17 +361,12 @@ export default function ProfilePage() {
                 </h3>
                 <p className="text-purple-100 mb-1">Plano atual</p>
                 <p className="text-xl font-bold">
-                  {
-                    planPrices[
-                      (user?.plan as keyof typeof planPrices) || "basic"
-                    ]
-                  }
-                  /mês
+                  {getPlanPrice(user?.plan || "basic")}/mês
                 </p>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2">
                 <p className="text-sm">Próxima cobrança</p>
-                <p className="font-medium">15 de Outubro, 2023</p>
+                <p className="font-medium">{nextBillingDate}</p>
               </div>
             </div>
           </div>
@@ -308,7 +387,7 @@ export default function ProfilePage() {
               >
                 <h4 className="font-bold text-gray-800 mb-1">Básico</h4>
                 <p className="text-xl font-bold text-purple-600 mb-3">
-                  {planPrices.basic}/mês
+                  {getPlanPrice("basic")}
                 </p>
                 <ul className="text-sm text-gray-600 mb-4 space-y-1">
                   <li>• 30 conversas por mês</li>
@@ -344,7 +423,7 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 <p className="text-xl font-bold text-purple-600 mb-3">
-                  {planPrices.premium}/mês
+                  {getPlanPrice("premium")}
                 </p>
                 <ul className="text-sm text-gray-600 mb-4 space-y-1">
                   <li>• Conversas ilimitadas</li>
@@ -376,7 +455,7 @@ export default function ProfilePage() {
               >
                 <h4 className="font-bold text-gray-800 mb-1">VIP</h4>
                 <p className="text-xl font-bold text-purple-600 mb-3">
-                  {planPrices.vip}/mês
+                  {getPlanPrice("vip")}
                 </p>
                 <ul className="text-sm text-gray-600 mb-4 space-y-1">
                   <li>• Conversas ilimitadas</li>

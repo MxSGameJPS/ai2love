@@ -347,8 +347,8 @@ export default function Dashboard() {
           <Link
             href={
               user?.plan === "basic"
-                ? "/dashboard/upgrade"
-                : "/dashboard/subscription"
+                ? "/planos"
+                : "/dashboard/profile#subscription"
             }
             className="flex flex-col items-center p-5 text-center text-white transition-all duration-300 shadow-sm bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl hover:shadow-md hover:translate-y-[-2px]"
           >

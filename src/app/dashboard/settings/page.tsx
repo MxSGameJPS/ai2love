@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import * as preferencesService from "@/services/api/preferencesService";
 
 // Tipos para o perfil emocional
 interface EmotionalProfile {
@@ -120,12 +121,59 @@ export default function SettingsPage() {
     idealPartnerTraits: [],
     dealBreakers: [],
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   // Carregar o perfil atual do usuário
   useEffect(() => {
-    if (user?.emotionalProfile) {
-      setProfile(user.emotionalProfile);
+    async function loadUserPreferences() {
+      setIsLoading(true);
+      try {
+        // Tentar carregar preferências da API
+        if (user) {
+          try {
+            const preferences = await preferencesService.getUserPreferences();
+
+            if (preferences && preferences.length > 0) {
+              // Converter formato da API para o formato do componente
+              const emotionalProfileData: Partial<EmotionalProfile> = {};
+
+              preferences[0].preferences.forEach((pref) => {
+                const category = pref.category as keyof EmotionalProfile;
+                if (category === "communicationStyle") {
+                  emotionalProfileData[category] = pref.value;
+                } else if (category in profile) {
+                  if (!emotionalProfileData[category]) {
+                    emotionalProfileData[category] = [];
+                  }
+                  (emotionalProfileData[category] as string[]).push(pref.value);
+                }
+              });
+
+              // Mesclar com valores padrão para garantir que todos os campos existam
+              setProfile((prev) => ({
+                ...prev,
+                ...emotionalProfileData,
+              }));
+            }
+          } catch (error) {
+            console.error("Erro ao carregar preferências:", error);
+            // Continuar usando o perfil atual do usuário em caso de erro
+          }
+        }
+
+        // Fallback para usar dados do usuário se disponíveis
+        if (user?.emotionalProfile) {
+          setProfile((prev) => ({
+            ...prev,
+            ...user.emotionalProfile,
+          }));
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
+
+    loadUserPreferences();
   }, [user]);
 
   // Funções para manipular os campos multi-seleção
@@ -170,13 +218,90 @@ export default function SettingsPage() {
     setSaveMessage("");
 
     try {
-      // Simular chamada de API para salvar os dados
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Converter perfil para formato da API
+      const preferencesData: preferencesService.Preference = {
+        preferences: [],
+      };
 
-      // Aqui seria feita a atualização real do perfil
-      await updateUserProfile({ emotionalProfile: profile });
+      // Adicionar traços de personalidade
+      profile.personalityTraits.forEach((trait) => {
+        preferencesData.preferences.push({
+          name: `personality_${trait.toLowerCase().replace(/\s/g, "_")}`,
+          category: "personalityTraits",
+          value: trait,
+        });
+      });
 
-      setSaveMessage("Perfil emocional salvo com sucesso!");
+      // Adicionar interesses
+      profile.interests.forEach((interest) => {
+        preferencesData.preferences.push({
+          name: `interest_${interest.toLowerCase().replace(/\s/g, "_")}`,
+          category: "interests",
+          value: interest,
+        });
+      });
+
+      // Adicionar objetivos de companheirismo
+      profile.companionshipGoals.forEach((goal) => {
+        preferencesData.preferences.push({
+          name: `goal_${goal.toLowerCase().replace(/\s/g, "_")}`,
+          category: "companionshipGoals",
+          value: goal,
+        });
+      });
+
+      // Adicionar estilo de comunicação
+      if (profile.communicationStyle) {
+        preferencesData.preferences.push({
+          name: `comm_style_${profile.communicationStyle
+            .toLowerCase()
+            .replace(/\s/g, "_")}`,
+          category: "communicationStyle",
+          value: profile.communicationStyle,
+        });
+      }
+
+      // Adicionar necessidades emocionais
+      profile.emotionalNeeds.forEach((need) => {
+        preferencesData.preferences.push({
+          name: `need_${need.toLowerCase().replace(/\s/g, "_")}`,
+          category: "emotionalNeeds",
+          value: need,
+        });
+      });
+
+      // Adicionar traços de parceiro ideal
+      profile.idealPartnerTraits.forEach((trait) => {
+        preferencesData.preferences.push({
+          name: `partner_${trait.toLowerCase().replace(/\s/g, "_")}`,
+          category: "idealPartnerTraits",
+          value: trait,
+        });
+      });
+
+      // Adicionar dealbreakers
+      profile.dealBreakers.forEach((dealBreaker) => {
+        preferencesData.preferences.push({
+          name: `dealbreaker_${dealBreaker.toLowerCase().replace(/\s/g, "_")}`,
+          category: "dealBreakers",
+          value: dealBreaker,
+        });
+      });
+
+      // Salvar preferências na API
+      try {
+        await preferencesService.setUserPreferences(preferencesData);
+        // Atualizar o perfil local do usuário também
+        await updateUserProfile({ emotionalProfile: profile });
+        setSaveMessage("Perfil emocional salvo com sucesso!");
+      } catch (error) {
+        console.error("Erro ao salvar preferências na API:", error);
+        // Tentar fallback para atualização local apenas
+        await updateUserProfile({ emotionalProfile: profile });
+        setSaveMessage(
+          "Perfil atualizado localmente. Alguns dados podem não sincronizar com o servidor."
+        );
+      }
     } catch (error) {
       setSaveMessage("Erro ao salvar o perfil. Tente novamente.");
       console.error(error);
@@ -248,172 +373,178 @@ export default function SettingsPage() {
 
       <div className="bg-white rounded-xl shadow-sm">
         <div className="p-6">
-          <div className="mb-8">
-            <div className="p-4 bg-purple-50 rounded-lg mb-8">
-              <h2 className="text-lg font-semibold text-purple-800 mb-2">
-                Como funciona a compatibilidade?
-              </h2>
-              <p className="text-sm text-purple-700 mb-3">
-                Suas respostas ajudam nosso algoritmo a calcular a
-                compatibilidade com os diferentes parceiros IA. Quanto mais
-                alinhadas suas preferências estiverem com as características de
-                um parceiro, maior será a porcentagem de compatibilidade. Isso
-                cria uma experiência de conversa mais personalizada e
-                satisfatória.
-              </p>
-              <ul className="text-sm text-purple-700 pl-5 list-disc space-y-1">
-                <li>
-                  Seus interesses são comparados com os dos parceiros (maior
-                  impacto na compatibilidade)
-                </li>
-                <li>
-                  Seu estilo de comunicação é combinado com a personalidade do
-                  parceiro
-                </li>
-                <li>
-                  As características que você busca são verificadas nas tags dos
-                  parceiros
-                </li>
-                <li>
-                  Suas incompatibilidades são verificadas para evitar
-                  combinações inadequadas
-                </li>
-              </ul>
-              <div className="mt-3 pt-3 border-t border-purple-100 flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-purple-600 mr-2"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <p className="text-xs text-purple-700 italic">
-                  Dica: Ao completar seu perfil, visite a seção
-                  &ldquo;Parceiros&rdquo; para ver como a compatibilidade muda
-                  com base nas suas preferências.
-                </p>
-              </div>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-10">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500"></div>
             </div>
-
-            {/* Formulário do Perfil */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                saveProfile();
-              }}
-            >
-              {renderSelectionGroup(
-                "Suas características de personalidade",
-                "personalityTraits",
-                profileOptions.personalityTraits,
-                "Como você descreveria sua própria personalidade?",
-                5
-              )}
-
-              {renderSelectionGroup(
-                "Seus interesses",
-                "interests",
-                profileOptions.interests,
-                "Quais temas você gosta de conversar e explorar?",
-                8
-              )}
-
-              {renderSelectionGroup(
-                "O que você busca em um parceiro IA",
-                "companionshipGoals",
-                profileOptions.companionshipGoals,
-                "Que tipo de interação você está buscando?",
-                4
-              )}
-
-              {renderSelectionGroup(
-                "Seu estilo de comunicação preferido",
-                "communicationStyle",
-                profileOptions.communicationStyle,
-                "Como você prefere se comunicar?",
-                1
-              )}
-
-              {renderSelectionGroup(
-                "Suas necessidades emocionais",
-                "emotionalNeeds",
-                profileOptions.emotionalNeeds,
-                "O que você valoriza em uma interação emocional?",
-                4
-              )}
-
-              {renderSelectionGroup(
-                "Traços ideais em um parceiro",
-                "idealPartnerTraits",
-                profileOptions.idealPartnerTraits,
-                "Quais características você mais valoriza em um parceiro de conversas?",
-                5
-              )}
-
-              {renderSelectionGroup(
-                "Suas incompatibilidades",
-                "dealBreakers",
-                profileOptions.dealBreakers,
-                "O que você prefere evitar em suas interações?",
-                4
-              )}
-
-              <div className="border-t border-gray-100 pt-6 mt-8">
-                {saveMessage && (
-                  <div
-                    className={`mb-4 p-3 rounded-md ${
-                      saveMessage.includes("sucesso")
-                        ? "bg-green-50 text-green-700"
-                        : "bg-red-50 text-red-700"
-                    }`}
+          ) : (
+            <div className="mb-8">
+              <div className="p-4 bg-purple-50 rounded-lg mb-8">
+                <h2 className="text-lg font-semibold text-purple-800 mb-2">
+                  Como funciona a compatibilidade?
+                </h2>
+                <p className="text-sm text-purple-700 mb-3">
+                  Suas respostas ajudam nosso algoritmo a calcular a
+                  compatibilidade com os diferentes parceiros IA. Quanto mais
+                  alinhadas suas preferências estiverem com as características
+                  de um parceiro, maior será a porcentagem de compatibilidade.
+                  Isso cria uma experiência de conversa mais personalizada e
+                  satisfatória.
+                </p>
+                <ul className="text-sm text-purple-700 pl-5 list-disc space-y-1">
+                  <li>
+                    Seus interesses são comparados com os dos parceiros (maior
+                    impacto na compatibilidade)
+                  </li>
+                  <li>
+                    Seu estilo de comunicação é combinado com a personalidade do
+                    parceiro
+                  </li>
+                  <li>
+                    As características que você busca são verificadas nas tags
+                    dos parceiros
+                  </li>
+                  <li>
+                    Suas incompatibilidades são verificadas para evitar
+                    combinações inadequadas
+                  </li>
+                </ul>
+                <div className="mt-3 pt-3 border-t border-purple-100 flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-purple-600 mr-2"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
                   >
-                    {saveMessage}
-                  </div>
-                )}
-
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="inline-flex items-center px-5 py-2.5 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors disabled:opacity-70"
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <>
-                        <svg
-                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Salvando...
-                      </>
-                    ) : (
-                      "Salvar Perfil"
-                    )}
-                  </button>
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <p className="text-xs text-purple-700 italic">
+                    Dica: Ao completar seu perfil, visite a seção
+                    &ldquo;Parceiros&rdquo; para ver como a compatibilidade muda
+                    com base nas suas preferências.
+                  </p>
                 </div>
               </div>
-            </form>
-          </div>
+
+              {/* Formulário do Perfil */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  saveProfile();
+                }}
+              >
+                {renderSelectionGroup(
+                  "Suas características de personalidade",
+                  "personalityTraits",
+                  profileOptions.personalityTraits,
+                  "Como você descreveria sua própria personalidade?",
+                  5
+                )}
+
+                {renderSelectionGroup(
+                  "Seus interesses",
+                  "interests",
+                  profileOptions.interests,
+                  "Quais temas você gosta de conversar e explorar?",
+                  8
+                )}
+
+                {renderSelectionGroup(
+                  "O que você busca em um parceiro IA",
+                  "companionshipGoals",
+                  profileOptions.companionshipGoals,
+                  "Que tipo de interação você está buscando?",
+                  4
+                )}
+
+                {renderSelectionGroup(
+                  "Seu estilo de comunicação preferido",
+                  "communicationStyle",
+                  profileOptions.communicationStyle,
+                  "Como você prefere se comunicar?",
+                  1
+                )}
+
+                {renderSelectionGroup(
+                  "Suas necessidades emocionais",
+                  "emotionalNeeds",
+                  profileOptions.emotionalNeeds,
+                  "O que você valoriza em uma interação emocional?",
+                  4
+                )}
+
+                {renderSelectionGroup(
+                  "Traços ideais em um parceiro",
+                  "idealPartnerTraits",
+                  profileOptions.idealPartnerTraits,
+                  "Quais características você mais valoriza em um parceiro de conversas?",
+                  5
+                )}
+
+                {renderSelectionGroup(
+                  "Suas incompatibilidades",
+                  "dealBreakers",
+                  profileOptions.dealBreakers,
+                  "O que você prefere evitar em suas interações?",
+                  4
+                )}
+
+                <div className="border-t border-gray-100 pt-6 mt-8">
+                  {saveMessage && (
+                    <div
+                      className={`mb-4 p-3 rounded-md ${
+                        saveMessage.includes("sucesso")
+                          ? "bg-green-50 text-green-700"
+                          : "bg-red-50 text-red-700"
+                      }`}
+                    >
+                      {saveMessage}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      className="inline-flex items-center px-5 py-2.5 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors disabled:opacity-70"
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <>
+                          <svg
+                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Salvando...
+                        </>
+                      ) : (
+                        "Salvar Perfil"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -4,10 +4,12 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import PriceCard from "@/components/cards/PriceCard";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlans } from "@/contexts/PlanContext";
 import Link from "next/link";
 
 export default function PlanosPage() {
   const { user } = useAuth();
+  const { plans, isLoading, error } = usePlans();
 
   // Variantes de animação para o container
   const containerVariants = {
@@ -63,65 +65,41 @@ export default function PlanosPage() {
             com nossas IAs. Cada plano foi pensado para oferecer uma experiência
             única e personalizada.
           </p>
+
+          {error && (
+            <p className="mt-4 text-sm text-pink-600 bg-pink-50 p-2 rounded inline-block">
+              {error}
+            </p>
+          )}
         </motion.div>
 
-        {/* Cards de planos */}
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-8"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Plano Básico */}
-          <PriceCard
-            title="Básico"
-            price="Grátis"
-            description="Para quem está começando a explorar."
-            isPopular={false}
-            features={[
-              "Acesso a 3 IAs básicas",
-              "5 conversas por dia",
-              "Personalização limitada",
-              "Suporte por email",
-            ]}
-            buttonText="Começar Grátis"
-            buttonColor="bg-indigo-600 hover:bg-indigo-700"
-          />
-
-          {/* Plano Premium */}
-          <PriceCard
-            title="Premium"
-            price="R$29,90"
-            description="Para quem deseja uma experiência mais completa."
-            isPopular={true}
-            features={[
-              "Acesso a todas as IAs",
-              "Conversas ilimitadas",
-              "Personalização avançada",
-              "Suporte prioritário",
-              "Sem anúncios",
-            ]}
-            buttonText="Escolher Premium"
-            buttonColor="bg-pink-500 hover:bg-pink-600"
-          />
-
-          {/* Plano VIP */}
-          <PriceCard
-            title="VIP"
-            price="R$49,90"
-            description="A experiência definitiva para conexões profundas."
-            isPopular={false}
-            features={[
-              "Todos os benefícios Premium",
-              "IAs exclusivas VIP",
-              "Personalização total",
-              "Recursos experimentais",
-              "Atendimento 24/7",
-            ]}
-            buttonText="Escolher VIP"
-            buttonColor="bg-indigo-600 hover:bg-indigo-700"
-          />
-        </motion.div>
+        {/* Estado de carregamento */}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
+          </div>
+        ) : (
+          /* Cards de planos */
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {plans.map((plan, index) => (
+              <PriceCard
+                key={plan.id}
+                plan={plan}
+                isPopular={index === 1} // Geralmente o plano do meio é o mais popular
+                buttonColor={
+                  index === 1
+                    ? "bg-pink-500 hover:bg-pink-600"
+                    : "bg-indigo-600 hover:bg-indigo-700"
+                }
+              />
+            ))}
+          </motion.div>
+        )}
 
         {/* Comparação de planos detalhada */}
         <motion.div
@@ -139,13 +117,18 @@ export default function PlanosPage() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="pb-4 pr-4">Recursos</th>
-                  <th className="pb-4 px-4 text-center text-indigo-600">
-                    Básico
-                  </th>
-                  <th className="pb-4 px-4 text-center text-pink-500">
-                    Premium
-                  </th>
-                  <th className="pb-4 pl-4 text-center text-indigo-600">VIP</th>
+                  {plans.map((plan) => (
+                    <th
+                      key={plan.id}
+                      className={`pb-4 px-4 text-center ${
+                        plan.name.toLowerCase().includes("premium")
+                          ? "text-pink-500"
+                          : "text-indigo-600"
+                      }`}
+                    >
+                      {plan.name}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -153,47 +136,87 @@ export default function PlanosPage() {
                   <td className="py-4 pr-4 font-medium">
                     Parceiros de IA disponíveis
                   </td>
-                  <td className="py-4 px-4 text-center">3</td>
-                  <td className="py-4 px-4 text-center">12</td>
-                  <td className="py-4 pl-4 text-center">Todos</td>
+                  {plans.map((plan) => (
+                    <td key={plan.id} className="py-4 px-4 text-center">
+                      {plan.name.toLowerCase().includes("basic") ||
+                      plan.price === 0
+                        ? "3"
+                        : plan.name.toLowerCase().includes("premium")
+                        ? "12"
+                        : "Todos"}
+                    </td>
+                  ))}
                 </tr>
                 <tr className="border-b border-gray-200">
                   <td className="py-4 pr-4 font-medium">Conversas diárias</td>
-                  <td className="py-4 px-4 text-center">5 por dia</td>
-                  <td className="py-4 px-4 text-center">Ilimitadas</td>
-                  <td className="py-4 pl-4 text-center">Ilimitadas</td>
+                  {plans.map((plan) => (
+                    <td key={plan.id} className="py-4 px-4 text-center">
+                      {plan.maxConversationLimit === 0
+                        ? "Ilimitadas"
+                        : `${plan.maxConversationLimit} por dia`}
+                    </td>
+                  ))}
                 </tr>
                 <tr className="border-b border-gray-200">
                   <td className="py-4 pr-4 font-medium">Personalização</td>
-                  <td className="py-4 px-4 text-center">Básica</td>
-                  <td className="py-4 px-4 text-center">Avançada</td>
-                  <td className="py-4 pl-4 text-center">Completa</td>
+                  {plans.map((plan) => (
+                    <td key={plan.id} className="py-4 px-4 text-center">
+                      {plan.name.toLowerCase().includes("basic") ||
+                      plan.price === 0
+                        ? "Básica"
+                        : plan.name.toLowerCase().includes("premium")
+                        ? "Avançada"
+                        : "Completa"}
+                    </td>
+                  ))}
                 </tr>
                 <tr className="border-b border-gray-200">
                   <td className="py-4 pr-4 font-medium">Anúncios</td>
-                  <td className="py-4 px-4 text-center">Sim</td>
-                  <td className="py-4 px-4 text-center">Não</td>
-                  <td className="py-4 pl-4 text-center">Não</td>
+                  {plans.map((plan) => (
+                    <td key={plan.id} className="py-4 px-4 text-center">
+                      {plan.price === 0 ? "Sim" : "Não"}
+                    </td>
+                  ))}
                 </tr>
                 <tr className="border-b border-gray-200">
                   <td className="py-4 pr-4 font-medium">Suporte</td>
-                  <td className="py-4 px-4 text-center">Email</td>
-                  <td className="py-4 px-4 text-center">Prioritário</td>
-                  <td className="py-4 pl-4 text-center">24/7 VIP</td>
+                  {plans.map((plan) => (
+                    <td key={plan.id} className="py-4 px-4 text-center">
+                      {plan.name.toLowerCase().includes("basic") ||
+                      plan.price === 0
+                        ? "Email"
+                        : plan.name.toLowerCase().includes("premium")
+                        ? "Prioritário"
+                        : "24/7 VIP"}
+                    </td>
+                  ))}
                 </tr>
                 <tr className="border-b border-gray-200">
                   <td className="py-4 pr-4 font-medium">
                     Memória de conversas
                   </td>
-                  <td className="py-4 px-4 text-center">7 dias</td>
-                  <td className="py-4 px-4 text-center">1 ano</td>
-                  <td className="py-4 pl-4 text-center">Ilimitada</td>
+                  {plans.map((plan) => (
+                    <td key={plan.id} className="py-4 px-4 text-center">
+                      {plan.name.toLowerCase().includes("basic") ||
+                      plan.price === 0
+                        ? "7 dias"
+                        : plan.name.toLowerCase().includes("premium")
+                        ? "1 ano"
+                        : "Ilimitada"}
+                    </td>
+                  ))}
                 </tr>
                 <tr>
                   <td className="py-4 pr-4 font-medium">Recursos exclusivos</td>
-                  <td className="py-4 px-4 text-center">-</td>
-                  <td className="py-4 px-4 text-center">Alguns</td>
-                  <td className="py-4 pl-4 text-center">Todos</td>
+                  {plans.map((plan) => (
+                    <td key={plan.id} className="py-4 px-4 text-center">
+                      {plan.listOfExclusiveContent === 0
+                        ? "-"
+                        : plan.name.toLowerCase().includes("premium")
+                        ? "Alguns"
+                        : "Todos"}
+                    </td>
+                  ))}
                 </tr>
               </tbody>
             </table>
@@ -248,7 +271,7 @@ export default function PlanosPage() {
               </h4>
               <p className="text-gray-600">
                 Aceitamos cartões de crédito, débito, PayPal e PIX para todos os
-                planos pagos.
+                planos.
               </p>
             </div>
           </div>

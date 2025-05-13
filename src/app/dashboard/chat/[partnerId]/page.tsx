@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
+import * as partnerService from "@/services/api/partnerService";
 
 // Tipos para as mensagens e parceiros
 interface Message {
@@ -15,23 +16,11 @@ interface Message {
   isRead: boolean;
 }
 
-interface Partner {
-  id: string;
-  name: string;
-  avatar: string;
-  description: string;
-  tags: string[];
-  personality: string;
-  isOnline: boolean;
-  compatibility: number;
-  interests: string[];
-}
-
 // Componente principal do chat
 export default function ChatPage() {
   const { partnerId } = useParams<{ partnerId: string }>();
   const { user } = useAuth();
-  const [partner, setPartner] = useState<Partner | null>(null);
+  const [partner, setPartner] = useState<partnerService.Partner | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isPartnerTyping, setIsPartnerTyping] = useState(false);
@@ -41,70 +30,102 @@ export default function ChatPage() {
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showPartnerInfo, setShowPartnerInfo] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Simulação de carregamento de mensagens paginadas
+  // Carregar mensagens da API
   const fetchMessages = async (page: number) => {
     if (page === 1) setIsLoading(true);
     else setIsLoadingMore(true);
 
     try {
-      // Simulando uma chamada de API para obter mensagens
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Chamar a API para obter mensagens
+      const messagesResponse = await partnerService.getMessageHistory(
+        partnerId as string,
+        page,
+        20
+      );
 
-      // Mensagens simuladas
-      const mockMessages: Message[] = [];
-      const startDate = new Date();
-      startDate.setHours(startDate.getHours() - 24 * page);
+      if (messagesResponse && messagesResponse.messages) {
+        // Converter para o formato que o componente espera
+        const formattedMessages = messagesResponse.messages.map((msg: any) => ({
+          id: msg.id,
+          senderId: msg.senderId,
+          receiverId: msg.receiverId,
+          content: msg.content,
+          timestamp: new Date(msg.timestamp),
+          isRead: msg.isRead,
+        }));
 
-      // Gerar 10 mensagens simuladas para esta página
-      for (let i = 0; i < 10; i++) {
-        const messageTime = new Date(startDate);
-        messageTime.setMinutes(messageTime.getMinutes() + i * 15);
+        // Se for a primeira página, substituir mensagens; caso contrário, adicionar ao início
+        if (page === 1) {
+          setMessages(formattedMessages);
+        } else {
+          setMessages((prev) => [...formattedMessages, ...prev]);
+        }
 
-        const isUserMessage = i % 2 === 0;
-        const messageContent = isUserMessage
-          ? [
-              `Olá, como você está?`,
-              `Me conte mais sobre seus interesses.`,
-              `Gosto muito de conversar com você.`,
-              `O que você acha sobre filosofia?`,
-              `Como tem sido seu dia?`,
-            ][Math.floor(Math.random() * 5)]
-          : [
-              `Estou muito bem, obrigado por perguntar!`,
-              `Adoro filosofia, especialmente existencialismo. E você?`,
-              `Meu dia está sendo produtivo e agradável.`,
-              `Tenho interesse em literatura, arte e música.`,
-              `Que bom conversar com você também!`,
-            ][Math.floor(Math.random() * 5)];
-
-        mockMessages.push({
-          id: `msg_${page}_${i}`,
-          senderId: isUserMessage ? user?.id || "user" : (partnerId as string),
-          receiverId: isUserMessage
-            ? (partnerId as string)
-            : user?.id || "user",
-          content: messageContent,
-          timestamp: messageTime,
-          isRead: true,
-        });
-      }
-
-      // Se for a primeira página, substituir mensagens; caso contrário, adicionar ao início
-      if (page === 1) {
-        setMessages(mockMessages);
+        // Verificar se há mais mensagens para carregar
+        setHasMore(messagesResponse.hasMore);
+        setPage(page);
       } else {
-        setMessages((prev) => [...mockMessages, ...prev]);
-      }
+        // Fallback para mensagens simuladas quando a API não retorna dados
+        // Mensagens simuladas
+        const mockMessages: Message[] = [];
+        const startDate = new Date();
+        startDate.setHours(startDate.getHours() - 24 * page);
 
-      // Simular se há mais mensagens para carregar
-      setHasMore(page < 5); // Limite de 5 páginas para exemplo
-      setPage(page);
+        // Gerar 10 mensagens simuladas para esta página
+        for (let i = 0; i < 10; i++) {
+          const messageTime = new Date(startDate);
+          messageTime.setMinutes(messageTime.getMinutes() + i * 15);
+
+          const isUserMessage = i % 2 === 0;
+          const messageContent = isUserMessage
+            ? [
+                `Olá, como você está?`,
+                `Me conte mais sobre seus interesses.`,
+                `Gosto muito de conversar com você.`,
+                `O que você acha sobre filosofia?`,
+                `Como tem sido seu dia?`,
+              ][Math.floor(Math.random() * 5)]
+            : [
+                `Estou muito bem, obrigado por perguntar!`,
+                `Adoro filosofia, especialmente existencialismo. E você?`,
+                `Meu dia está sendo produtivo e agradável.`,
+                `Tenho interesse em literatura, arte e música.`,
+                `Que bom conversar com você também!`,
+              ][Math.floor(Math.random() * 5)];
+
+          mockMessages.push({
+            id: `msg_${page}_${i}`,
+            senderId: isUserMessage
+              ? user?.id || "user"
+              : (partnerId as string),
+            receiverId: isUserMessage
+              ? (partnerId as string)
+              : user?.id || "user",
+            content: messageContent,
+            timestamp: messageTime,
+            isRead: true,
+          });
+        }
+
+        // Se for a primeira página, substituir mensagens; caso contrário, adicionar ao início
+        if (page === 1) {
+          setMessages(mockMessages);
+        } else {
+          setMessages((prev) => [...mockMessages, ...prev]);
+        }
+
+        // Simular se há mais mensagens para carregar
+        setHasMore(page < 5); // Limite de 5 páginas para exemplo
+        setPage(page);
+      }
     } catch (error) {
       console.error("Erro ao carregar mensagens:", error);
+      setError("Falha ao carregar mensagens. Por favor, tente novamente.");
     } finally {
       if (page === 1) setIsLoading(false);
       else setIsLoadingMore(false);
@@ -115,54 +136,64 @@ export default function ChatPage() {
   useEffect(() => {
     const fetchPartnerData = async () => {
       setIsLoading(true);
+      setError(null);
+
       try {
-        // Em uma implementação real, você buscaria dados do parceiro de uma API
-        // Simulando obtenção de dados do parceiro
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        // Buscar detalhes do parceiro via API
+        const partnerData = await partnerService.getPartnerById(
+          partnerId as string
+        );
 
-        // Dados simulados do parceiro
-        const mockPartner: Partner = {
-          id: partnerId as string,
-          name:
-            partnerId === "1"
-              ? "Sofia"
-              : partnerId === "2"
-              ? "Lucas"
-              : partnerId === "3"
-              ? "Mei"
-              : partnerId === "4"
-              ? "Julia"
-              : partnerId === "5"
-              ? "Alex"
-              : partnerId === "6"
-              ? "Olivia"
-              : partnerId === "7"
-              ? "Thomas"
-              : "Layla",
-          avatar: `https://xsgames.co/randomusers/assets/avatars/${
-            partnerId === "1" ||
-            partnerId === "3" ||
-            partnerId === "4" ||
-            partnerId === "6" ||
-            partnerId === "8"
-              ? "female"
-              : "male"
-          }/${Math.floor(Math.random() * 50) + 10}.jpg`,
-          description:
-            "Parceiro de IA interativo para conversas significativas",
-          tags: ["Empático", "Conversador", "Atencioso"],
-          personality: "Amigável e compreensivo",
-          isOnline: true,
-          compatibility: 85,
-          interests: ["Literatura", "Filosofia", "Artes", "Tecnologia"],
-        };
+        if (partnerData) {
+          setPartner(partnerData);
+        } else {
+          // Fallback para dados simulados do parceiro se a API falhar
+          const mockPartner = {
+            id: partnerId as string,
+            name:
+              partnerId === "1"
+                ? "Sofia"
+                : partnerId === "2"
+                ? "Lucas"
+                : partnerId === "3"
+                ? "Mei"
+                : partnerId === "4"
+                ? "Julia"
+                : partnerId === "5"
+                ? "Alex"
+                : partnerId === "6"
+                ? "Olivia"
+                : partnerId === "7"
+                ? "Thomas"
+                : "Layla",
+            avatar: `https://xsgames.co/randomusers/assets/avatars/${
+              partnerId === "1" ||
+              partnerId === "3" ||
+              partnerId === "4" ||
+              partnerId === "6" ||
+              partnerId === "8"
+                ? "female"
+                : "male"
+            }/${Math.floor(Math.random() * 50) + 10}.jpg`,
+            description:
+              "Parceiro de IA interativo para conversas significativas",
+            tags: ["Empático", "Conversador", "Atencioso"],
+            personality: "Amigável e compreensivo",
+            isOnline: true,
+            isPremium: false,
+            interests: ["Literatura", "Filosofia", "Artes", "Tecnologia"],
+          };
 
-        setPartner(mockPartner);
+          setPartner(mockPartner);
+        }
 
         // Simulando obtenção de mensagens anteriores
         await fetchMessages(1);
       } catch (error) {
         console.error("Erro ao carregar dados do parceiro:", error);
+        setError(
+          "Não foi possível carregar os dados do parceiro. Tente novamente mais tarde."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -254,17 +285,22 @@ export default function ChatPage() {
         isRead: false,
       };
 
-      // Adicionar mensagem do usuário imediatamente
+      // Adicionar a mensagem do usuário imediatamente
       setMessages((prev) => [...prev, userMessage]);
       setNewMessage("");
 
-      // Simular envio para o servidor
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      // Simular resposta do parceiro IA após um tempo
-      simulatePartnerTyping();
+      // Enviar mensagem via API
+      try {
+        await partnerService.sendMessage(partner.id, newMessage);
+        // Se o envio for bem-sucedido, a API retornará uma resposta do parceiro
+        // A resposta do parceiro seria tratada por um socket ou webhook em uma implementação real
+      } catch (error) {
+        console.error("Erro ao enviar mensagem:", error);
+        // Em caso de falha na API, continuar com o comportamento simulado local
+        simulatePartnerTyping();
+      }
     } catch (error) {
-      console.error("Erro ao enviar mensagem:", error);
+      console.error("Erro ao processar mensagem:", error);
     } finally {
       setIsSending(false);
     }

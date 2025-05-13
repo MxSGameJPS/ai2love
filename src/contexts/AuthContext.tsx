@@ -2,6 +2,8 @@
 
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import * as authService from "@/services/api/authService";
+import * as paymentService from "@/services/api/paymentService";
 
 type PlanType = "basic" | "premium" | "vip" | null;
 
@@ -40,7 +42,10 @@ interface AuthContextType {
   register: (
     name: string,
     email: string,
-    password: string
+    password: string,
+    cpf: string,
+    acceptedTermsAndConditions: boolean,
+    birthdate: string
   ) => Promise<{ success: boolean; userId?: string }>;
   selectPlan: (userId: string, plan: PlanType) => Promise<boolean>;
   logout: () => void;
@@ -76,8 +81,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
 
       // Credenciais de teste para desenvolvimento
-      const TEST_EMAIL = "teste@exemplo.com";
-      const TEST_PASSWORD = "senha123";
+      const TEST_EMAIL = "teste@email.com";
+      const TEST_PASSWORD = "Teste@123";
 
       // Verificar se são as credenciais de teste
       if (email === TEST_EMAIL && password === TEST_PASSWORD) {
@@ -111,39 +116,73 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
-      // Simulação de chamada de API para outras credenciais
-      // Na implementação real, substitua por uma chamada fetch para sua API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Chamada para a API real
+      try {
+        const response = await authService.login(email, password);
 
-      // Simulando um login bem-sucedido
-      const mockUser: User = {
-        id: "user123",
-        name: "Usuário Teste",
-        email: email,
-        emailVerified: true,
-        plan: "basic",
-        emotionalProfile: {
-          personalityTraits: [],
-          interests: [],
-          companionshipGoals: [],
-          communicationStyle: "",
-          emotionalNeeds: [],
-          idealPartnerTraits: [],
-          dealBreakers: [],
-        },
-      };
+        if (response && response.token) {
+          const apiUser: User = {
+            id: response.user.id,
+            name: response.user.name,
+            email: response.user.email,
+            emailVerified: response.user.emailVerified || false,
+            plan: response.user.plan as PlanType,
+            emotionalProfile: response.user
+              .emotionalProfile as EmotionalProfile,
+          };
 
-      const mockToken = "jwt-token-example";
+          // Salvar dados no localStorage
+          localStorage.setItem("authToken", response.token);
+          localStorage.setItem("user", JSON.stringify(apiUser));
 
-      // Salvar dados no localStorage
-      localStorage.setItem("authToken", mockToken);
-      localStorage.setItem("user", JSON.stringify(mockUser));
+          // Atualizar estado
+          setUser(apiUser);
+          setToken(response.token);
 
-      // Atualizar estado
-      setUser(mockUser);
-      setToken(mockToken);
+          return true;
+        }
 
-      return true;
+        return false;
+      } catch (error) {
+        console.error("Erro na chamada da API de login:", error);
+
+        // Fallback para modo de desenvolvimento
+        if (process.env.NODE_ENV === "development") {
+          console.log("Usando login simulado para ambiente de desenvolvimento");
+
+          // Simulando um login bem-sucedido
+          const mockUser: User = {
+            id: "user123",
+            name: "Usuário Teste",
+            email: email,
+            emailVerified: true,
+            plan: "basic",
+            emotionalProfile: {
+              personalityTraits: [],
+              interests: [],
+              companionshipGoals: [],
+              communicationStyle: "",
+              emotionalNeeds: [],
+              idealPartnerTraits: [],
+              dealBreakers: [],
+            },
+          };
+
+          const mockToken = "jwt-token-example";
+
+          // Salvar dados no localStorage
+          localStorage.setItem("authToken", mockToken);
+          localStorage.setItem("user", JSON.stringify(mockUser));
+
+          // Atualizar estado
+          setUser(mockUser);
+          setToken(mockToken);
+
+          return true;
+        }
+
+        return false;
+      }
     } catch (error) {
       console.error("Erro no login:", error);
       return false;
@@ -163,7 +202,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      // Simulação de chamada de API
+      // TODO: Implementar chamada para a API real
+      // const response = await api.put(`/api/users/${user.id}`, data);
+
+      // Por enquanto, simulação de chamada de API
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Atualizar os dados do usuário
@@ -184,27 +226,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (
     name: string,
     email: string,
-    password: string
+    password: string,
+    cpf: string,
+    acceptedTermsAndConditions: boolean,
+    birthdate: string
   ): Promise<{ success: boolean; userId?: string }> => {
     try {
       setIsLoading(true);
 
-      // Simulação de chamada de API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Chamada para a API real
+      try {
+        const response = await authService.register(
+          name,
+          email,
+          password,
+          cpf,
+          acceptedTermsAndConditions,
+          birthdate
+        );
 
-      // Salvar temporariamente os dados para usar depois
-      localStorage.setItem("tempUserName", name);
-      localStorage.setItem("tempUserEmail", email);
-      // A senha seria enviada para a API, não armazenada localmente
-      console.log(
-        `Registrando usuário: ${name}, ${email}, senha: ${password.length} caracteres`
-      );
+        if (response.success) {
+          // Salvar temporariamente os dados para usar depois
+          localStorage.setItem("tempUserName", name);
+          localStorage.setItem("tempUserEmail", email);
 
-      // Simulando um registro bem-sucedido (sem token e usuário completo ainda)
-      // Agora retornamos apenas um ID temporário para usar na seleção de plano
-      const tempUserId = "newuser" + Date.now();
+          return {
+            success: true,
+            userId: response.userId,
+          };
+        }
 
-      return { success: true, userId: tempUserId };
+        return { success: false };
+      } catch (error) {
+        console.error("Erro na chamada da API de registro:", error);
+
+        // Fallback para modo de desenvolvimento
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            "Usando registro simulado para ambiente de desenvolvimento"
+          );
+
+          // Salvar temporariamente os dados para usar depois
+          localStorage.setItem("tempUserName", name);
+          localStorage.setItem("tempUserEmail", email);
+
+          // Simulando um registro bem-sucedido
+          const tempUserId = "newuser" + Date.now();
+
+          return { success: true, userId: tempUserId };
+        }
+
+        return { success: false };
+      }
     } catch (error) {
       console.error("Erro no registro:", error);
       return { success: false };
@@ -221,42 +294,107 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
 
-      // Simulação de chamada de API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Obter o ID do plano salvo no localStorage ou usar o mapeamento padrão
+      const storedPlanId = localStorage.getItem("selectedPlanId");
 
-      // Agora sim criamos o usuário completo com o plano escolhido
-      const mockUser: User = {
-        id: userId,
-        name: localStorage.getItem("tempUserName") || "Novo Usuário",
-        email: localStorage.getItem("tempUserEmail") || "email@exemplo.com",
-        emailVerified: false,
-        plan: plan,
-        emotionalProfile: {
-          personalityTraits: [],
-          interests: [],
-          companionshipGoals: [],
-          communicationStyle: "",
-          emotionalNeeds: [],
-          idealPartnerTraits: [],
-          dealBreakers: [],
-        },
+      // Mapeamento de planos para IDs (caso não tenha ID armazenado)
+      const planIds: Record<string, string> = {
+        basic: "plan_basic_001",
+        premium: "plan_premium_001",
+        vip: "plan_vip_001",
       };
 
-      const mockToken = "jwt-token-example";
+      // Usar o ID armazenado ou o ID do mapeamento
+      const planId = storedPlanId || planIds[plan as keyof typeof planIds];
 
-      // Salvar dados no localStorage
-      localStorage.setItem("authToken", mockToken);
-      localStorage.setItem("user", JSON.stringify(mockUser));
+      // Limpar o ID do plano armazenado após uso
+      localStorage.removeItem("selectedPlanId");
 
-      // Remover dados temporários
-      localStorage.removeItem("tempUserName");
-      localStorage.removeItem("tempUserEmail");
+      // Chamada para a API de pagamento
+      try {
+        const paymentResponse = await paymentService.createPayment(
+          userId,
+          planId
+        );
 
-      // Atualizar estado
-      setUser(mockUser);
-      setToken(mockToken);
+        if (paymentResponse.success) {
+          // Após o pagamento bem-sucedido, ativar o plano do usuário
+          const response = await authService.selectPlan(userId, plan as string);
 
-      return true;
+          if (response.success) {
+            const mockUser: User = {
+              id: userId,
+              name: localStorage.getItem("tempUserName") || "Novo Usuário",
+              email:
+                localStorage.getItem("tempUserEmail") || "email@exemplo.com",
+              emailVerified: false,
+              plan: plan,
+              emotionalProfile: {
+                personalityTraits: [],
+                interests: [],
+                companionshipGoals: [],
+                communicationStyle: "",
+                emotionalNeeds: [],
+                idealPartnerTraits: [],
+                dealBreakers: [],
+              },
+            };
+
+            const mockToken = "jwt-token-example";
+
+            localStorage.setItem("authToken", mockToken);
+            localStorage.setItem("user", JSON.stringify(mockUser));
+
+            setUser(mockUser);
+            setToken(mockToken);
+
+            return true;
+          }
+
+          return false;
+        }
+
+        return false;
+      } catch (error) {
+        console.error("Erro na chamada da API de pagamento:", error);
+
+        // Fallback para modo de desenvolvimento
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            "Usando pagamento simulado para ambiente de desenvolvimento"
+          );
+
+          // Simular ativação de plano bem-sucedida
+          const mockUser: User = {
+            id: userId,
+            name: localStorage.getItem("tempUserName") || "Novo Usuário",
+            email: localStorage.getItem("tempUserEmail") || "email@exemplo.com",
+            emailVerified: false,
+            plan: plan,
+            emotionalProfile: {
+              personalityTraits: [],
+              interests: [],
+              companionshipGoals: [],
+              communicationStyle: "",
+              emotionalNeeds: [],
+              idealPartnerTraits: [],
+              dealBreakers: [],
+            },
+          };
+
+          const mockToken = "jwt-token-example";
+
+          localStorage.setItem("authToken", mockToken);
+          localStorage.setItem("user", JSON.stringify(mockUser));
+
+          setUser(mockUser);
+          setToken(mockToken);
+
+          return true;
+        }
+
+        return false;
+      }
     } catch (error) {
       console.error("Erro na seleção de plano:", error);
       return false;
@@ -267,10 +405,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Logout
   const logout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
     setUser(null);
     setToken(null);
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
     router.push("/login");
   };
 
@@ -279,15 +417,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
 
-      // Simulação de chamada de API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      try {
+        const response = await authService.requestPasswordReset(email);
+        return response.success;
+      } catch (error) {
+        console.error("Erro na chamada da API de recuperação de senha:", error);
 
-      // Em uma implementação real, a API enviaria um email de recuperação
-      console.log(`Solicitando recuperação de senha para: ${email}`);
+        // Simulação para desenvolvimento
+        if (process.env.NODE_ENV === "development") {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          return true;
+        }
 
-      return true;
+        return false;
+      }
     } catch (error) {
-      console.error("Erro na recuperação de senha:", error);
+      console.error("Erro na solicitação de recuperação de senha:", error);
       return false;
     } finally {
       setIsLoading(false);
@@ -299,20 +444,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
 
-      // Simulação de chamada de API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      try {
+        const response = await authService.verifyEmail(token);
 
-      // Em uma implementação real, você verificaria o token na API
-      // e atualizaria o status de verificação do usuário
-      console.log(`Verificando email com token: ${token}`);
+        if (response.success) {
+          // Se tivermos um usuário já logado, atualizamos o status de verificação de email
+          if (user) {
+            const updatedUser = { ...user, emailVerified: true };
+            setUser(updatedUser);
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+          }
 
-      if (user) {
-        const updatedUser = { ...user, emailVerified: true };
-        setUser(updatedUser);
-        localStorage.setItem("user", JSON.stringify(updatedUser));
+          return true;
+        }
+
+        return false;
+      } catch (error) {
+        console.error("Erro na chamada da API de verificação de email:", error);
+
+        // Simulação para desenvolvimento
+        if (process.env.NODE_ENV === "development") {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          if (user) {
+            const updatedUser = { ...user, emailVerified: true };
+            setUser(updatedUser);
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+          }
+
+          return true;
+        }
+
+        return false;
       }
-
-      return true;
     } catch (error) {
       console.error("Erro na verificação de email:", error);
       return false;
@@ -326,7 +490,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         token,
-        isAuthenticated: !!token,
+        isAuthenticated: !!user,
         isLoading,
         login,
         register,

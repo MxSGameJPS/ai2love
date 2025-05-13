@@ -1,30 +1,43 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import PaymentForm from "@/components/payment/PaymentForm";
+import { Plan } from "@/services/api/planService";
 
 interface PriceCardProps {
-  title: string;
-  price: string;
-  period?: string;
-  description: string;
+  plan: Plan;
   isPopular?: boolean;
-  features: string[];
-  buttonText: string;
-  buttonColor: string;
+  buttonText?: string;
+  buttonColor?: string;
 }
 
 export default function PriceCard({
-  title,
-  price,
-  period = "/mês",
-  description,
+  plan,
   isPopular = false,
-  features,
   buttonText,
-  buttonColor,
+  buttonColor = "bg-pink-500 hover:bg-pink-600",
 }: PriceCardProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+
+  // Se o plano não estiver disponível, renderizar um placeholder ou retornar null
+  if (!plan) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-center">
+        <p className="text-gray-400">Carregando informações do plano...</p>
+      </div>
+    );
+  }
+
+  // Configurar o texto do botão baseado no preço do plano
+  const defaultButtonText =
+    plan.price === 0 ? "Começar Grátis" : `Escolher ${plan.name}`;
+
+  const finalButtonText = buttonText || defaultButtonText;
 
   // Variantes de animação para o card
   const cardVariants = {
@@ -98,34 +111,87 @@ export default function PriceCard({
     tap: { scale: 0.95 },
   };
 
+  // Mapeamento do nome do plano para o tipo de plano
+  const getPlanType = (planName: string): "basic" | "premium" | "vip" => {
+    const planType = planName.toLowerCase();
+    if (
+      planType.includes("básico") ||
+      planType.includes("basico") ||
+      planType.includes("free") ||
+      planType.includes("gratuito")
+    ) {
+      return "basic";
+    } else if (planType.includes("premium")) {
+      return "premium";
+    } else {
+      return "vip";
+    }
+  };
+
   // Função para lidar com o clique no botão
   const handleButtonClick = () => {
-    // Identificar qual plano foi selecionado com base no título
-    const planType = title.toLowerCase();
+    // Identificar qual plano foi selecionado com base no nome
+    const planType = getPlanType(plan.name);
 
-    // Para o plano básico, apenas redirecionar para o cadastro
-    if (planType === "básico" || planType === "basico") {
-      router.push("/register");
+    // Se o usuário já estiver logado, mostrar o formulário de pagamento
+    if (user) {
+      setShowPaymentForm(true);
       return;
     }
 
-    // Para os planos premium e vip, salvar a seleção e redirecionar
-    let normalizedType = "";
-
-    if (planType === "premium") {
-      normalizedType = "premium";
-    } else if (planType === "vip") {
-      normalizedType = "vip";
-    } else {
-      normalizedType = "basic"; // Valor padrão, caso necessário
-    }
-
-    // Salvar o plano selecionado no localStorage para uso após o registro
-    localStorage.setItem("selectedPlan", normalizedType);
-
-    // Redirecionar para a página de cadastro
+    // Para usuários não logados, salvar a seleção e redirecionar para o cadastro
+    localStorage.setItem("selectedPlan", planType);
+    localStorage.setItem("selectedPlanId", plan.id);
     router.push("/register");
   };
+
+  // Gerar lista de recursos com base nas propriedades do plano
+  const generateFeatures = () => {
+    const features = [];
+
+    // Limite de conversas
+    if (plan.maxConversationLimit === 0) {
+      features.push("Conversas ilimitadas");
+    } else {
+      features.push(`${plan.maxConversationLimit} conversas por dia`);
+    }
+
+    // Chamadas de voz/vídeo
+    if (plan.hasVoiceCalls && plan.hasVideoCalls) {
+      features.push("Chamadas de voz e vídeo");
+    } else if (plan.hasVoiceCalls) {
+      features.push("Chamadas de voz");
+    }
+
+    // Conteúdo exclusivo
+    if (plan.listOfExclusiveContent > 0) {
+      features.push(`${plan.listOfExclusiveContent} conteúdos exclusivos`);
+    }
+
+    // Outros recursos
+    if (plan.price > 0) {
+      features.push("Sem anúncios");
+      features.push("Personalização avançada");
+    }
+
+    return features;
+  };
+
+  // Formato de preço
+  const formattedPrice =
+    plan.price === 0 ? "Grátis" : `R$ ${plan.price.toFixed(2)}`;
+
+  const features = generateFeatures();
+
+  if (showPaymentForm && user) {
+    return (
+      <PaymentForm
+        userId={user.id}
+        selectedPlan={getPlanType(plan.name)}
+        onCancel={() => setShowPaymentForm(false)}
+      />
+    );
+  }
 
   return (
     <motion.div
@@ -153,7 +219,7 @@ export default function PriceCard({
           className="text-lg font-semibold text-gray-800 mb-1"
           variants={itemVariants}
         >
-          {title}
+          {plan.name}
         </motion.h3>
 
         <motion.div
@@ -173,10 +239,18 @@ export default function PriceCard({
               },
             }}
           >
-            {price}
+            {formattedPrice}
           </motion.span>
-          {price !== "Grátis" && (
-            <span className="text-gray-500 text-sm ml-1">{period}</span>
+          {plan.price !== 0 && (
+            <span className="text-gray-500 text-sm ml-1">
+              {plan.billingCycle === "monthly"
+                ? "/mês"
+                : plan.billingCycle === "yearly"
+                ? "/ano"
+                : plan.billingCycle === "weekly"
+                ? "/semana"
+                : ""}
+            </span>
           )}
         </motion.div>
 
@@ -184,7 +258,7 @@ export default function PriceCard({
           className="text-gray-600 text-sm mb-6"
           variants={itemVariants}
         >
-          {description}
+          {plan.description}
         </motion.p>
 
         <motion.div className="space-y-3 mb-8 flex-grow">
@@ -236,7 +310,7 @@ export default function PriceCard({
           whileTap="tap"
           onClick={handleButtonClick}
         >
-          {buttonText}
+          {finalButtonText}
         </motion.button>
       </motion.div>
     </motion.div>

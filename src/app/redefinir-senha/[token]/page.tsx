@@ -2,49 +2,69 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { useAuth } from "@/contexts/AuthContext";
+import { useParams, useRouter } from "next/navigation";
+import * as authService from "@/services/api/authService";
 
-export default function RecuperarSenha() {
-  const [email, setEmail] = useState("");
+export default function RedefinirSenha() {
+  const { token } = useParams<{ token: string }>();
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
 
-  const { requestPasswordReset } = useAuth();
+  const validatePasswords = () => {
+    if (!password) {
+      setError("Por favor, informe uma nova senha");
+      return false;
+    }
+
+    if (password.length < 6) {
+      setError("A senha deve ter pelo menos 6 caracteres");
+      return false;
+    }
+
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem");
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccess(false);
 
-    if (!email) {
-      setError("Por favor, informe seu email");
-      return;
-    }
-
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError("Por favor, informe um email válido");
+    if (!validatePasswords()) {
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const result = await requestPasswordReset(email);
+      const response = await authService.resetPassword(
+        token as string,
+        password
+      );
 
-      if (result) {
+      if (response.success) {
         setSuccess(true);
+        // Redirecionar para login após 3 segundos
+        setTimeout(() => {
+          router.push("/login");
+        }, 3000);
       } else {
         setError(
-          "Não foi possível enviar o email de recuperação. Tente novamente."
+          "Não foi possível redefinir sua senha. O token pode ser inválido ou ter expirado."
         );
       }
     } catch (error) {
+      console.error("Erro na redefinição de senha:", error);
       setError(
         "Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde."
       );
-      console.error("Erro na recuperação de senha:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -52,29 +72,6 @@ export default function RecuperarSenha() {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      {/* Botão de voltar */}
-      <Link
-        href="/login"
-        className="absolute top-4 left-4 z-50 flex items-center text-gray-800 hover:text-pink-500 transition-colors"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="mr-1"
-        >
-          <path d="M19 12H5"></path>
-          <path d="M12 19l-7-7 7-7"></path>
-        </svg>
-        <span className="text-sm">Voltar</span>
-      </Link>
-
       <div className="flex flex-col items-center justify-center flex-1 px-4 py-12">
         {/* Logo */}
         <div className="mb-6 text-xl font-bold text-center text-pink-500">
@@ -86,10 +83,10 @@ export default function RecuperarSenha() {
         <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-800">
-              Recuperar Senha
+              Redefinir Senha
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              Informe seu email e enviaremos instruções para redefinir sua senha
+              Crie uma nova senha para sua conta
             </p>
           </div>
 
@@ -112,18 +109,12 @@ export default function RecuperarSenha() {
                 </svg>
               </div>
               <h3 className="text-lg font-medium text-green-800">
-                Email enviado!
+                Senha Redefinida!
               </h3>
               <p className="text-sm text-green-700">
-                Enviamos um link de recuperação para o email informado. Por
-                favor, verifique sua caixa de entrada e também a pasta de spam.
+                Sua senha foi alterada com sucesso. Você será redirecionado para
+                a página de login.
               </p>
-              <Link
-                href="/login"
-                className="inline-block px-4 py-2 text-sm font-medium text-white bg-pink-500 rounded-md hover:bg-pink-600"
-              >
-                Voltar para o login
-              </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -135,17 +126,35 @@ export default function RecuperarSenha() {
 
               <div>
                 <label
-                  htmlFor="email"
+                  htmlFor="password"
                   className="block mb-1 text-sm font-medium text-gray-700"
                 >
-                  Email
+                  Nova Senha
                 </label>
                 <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="********"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="confirm-password"
+                  className="block mb-1 text-sm font-medium text-gray-700"
+                >
+                  Confirmar Senha
+                </label>
+                <input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="********"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                   required
                 />
@@ -156,16 +165,15 @@ export default function RecuperarSenha() {
                 className="w-full py-2 text-sm font-medium text-white transition-colors bg-pink-500 rounded-md hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 disabled:bg-pink-300"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Enviando..." : "Enviar instruções"}
+                {isSubmitting ? "Processando..." : "Redefinir Senha"}
               </button>
 
               <div className="text-sm text-center text-gray-500">
-                Lembrou sua senha?{" "}
                 <Link
                   href="/login"
                   className="font-medium text-pink-500 hover:text-pink-600"
                 >
-                  Faça login
+                  Voltar para o login
                 </Link>
               </div>
             </form>
